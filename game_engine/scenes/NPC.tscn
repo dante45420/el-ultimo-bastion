@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3 uid="uid://cgrx7n07uvw6u"]
+
+[ext_resource type="Script" uid="uid://iw7tqwnb64q" path="res://scripts/NPC.gd" id="1_mhefn"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_6xvi5"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ktgr7"]
+height = 1.8
+
+[node name="NPC" type="CharacterBody3D"]
+script = ExtResource("1_mhefn")
+
+[node name="VisualModel" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_6xvi5")
+
+[node name="HitboxCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_ktgr7")
+
+[node name="NameLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+pixel_size = 0.05
+text = "\"NPC Name\""

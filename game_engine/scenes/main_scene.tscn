@@ -1,0 +1,33 @@
+[gd_scene load_steps=4 format=3 uid="uid://cardg18ft1ujs"]
+
+[ext_resource type="Script" uid="uid://u0b6j7ifpabr" path="res://scripts/World.gd" id="1_pw63i"]
+[ext_resource type="Script" uid="uid://bdcreesn4vwhn" path="res://scripts/Data_Loader.gd" id="2_7ykc4"]
+[ext_resource type="Script" uid="uid://djmh37iobeqk1" path="res://scripts/Player.gd" id="3_7ykc4"]
+
+[node name="MainScene" type="Node3D"]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+
+[node name="World_Node" type="Node3D" parent="."]
+script = ExtResource("1_pw63i")
+
+[node name="DataLoader" type="Node" parent="World_Node"]
+script = ExtResource("2_7ykc4")
+
+[node name="WorldNameLabel" type="Label3D" parent="World_Node"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
+
+[node name="GroundContainer" type="Node3D" parent="World_Node"]
+
+[node name="NPCContainer" type="Node3D" parent="World_Node"]
+
+[node name="PlayerCharacter" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 5, 50)
+script = ExtResource("3_7ykc4")
+
+[node name="CameraSpringArm" type="SpringArm3D" parent="PlayerCharacter"]
+transform = Transform3D(1, 0, 0, 0, 0.939693, -0.34202, 0, 0.34202, 0.939693, 0, 1.5, 0)
+spring_length = 4.0
+
+[node name="Camera3D" type="Camera3D" parent="PlayerCharacter/CameraSpringArm"]
+current = true

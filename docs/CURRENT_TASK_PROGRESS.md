@@ -1,254 +1,212 @@
 # Progreso de Tareas - El Último Bastión
 
 ## 📊 Estado Actual del Proyecto
-**Fecha de última actualización:** 2025-07-19  
-**Fase actual:** Infraestructura Básica - Base de Datos Completada  
-**Próximo hito:** Conexión Backend → Panel de Administración → Godot (Mundo y Bastión)
+**Fecha de última actualización:** 2025-07-26
+**Fase actual:** Fase 2 - Depuración de Conexión Básica y Mundo Sandbox
+**Próximo hito:** Lograr que el personaje del jugador (Bastión) sea visible, controlable y no caiga a través del mundo.
 
 ### Resumen Ejecutivo
-- ✅ **Documentación completa** (PROJECT_OVERVIEW, DATABASE_SCHEMA, DEVELOPMENT_GUIDELINES)
-- ✅ **Base de Datos PostgreSQL:** Esquema completo implementado, probado y validado.
-- ⏳ **Pendiente:** Implementación de las conexiones entre módulos y lógica del juego.
-- 🎯 **Objetivo inmediato:** Configurar el panel de administración y la carga de datos en Godot.
+- ✅ **Infraestructura Base Completa:** La base de datos, el backend y la estructura del proyecto son sólidos.
+- ✅ **Conexión Funcional:** Godot se conecta exitosamente al backend, carga los datos del mundo y los NPCs. El terreno se genera dinámicamente a partir de la base de datos.
+- ⏳ **En progreso:** Depuración de la física y la visualización del jugador en el "Mundo Sandbox". Se están resolviendo problemas de colisiones ("caída al vacío") y de visibilidad del personaje.
+- 🎯 **Objetivo inmediato:** Alcanzar un estado "jugable" básico donde el jugador puede moverse por un mundo sólido y ver a su personaje y a los NPCs.
 
 ---
 
 ## 🗂️ Tareas Organizadas por Fases
 
-### **FASE 1: INFRAESTRUCTURA BASE** #### 1.1 Estructura del Proyecto
-- **Estado:** ✅ Completada  
-- **Prioridad:** Crítica  
-- **Descripción:** Crear toda la estructura de carpetas según PROJECT_OVERVIEW.md y configurar archivos base.
-- **Entregables:**
-  - Carpetas `backend/`, `frontend/`, `game_engine/` con estructura completa.
-  - Archivos de configuración base (requirements.txt, package.json, project.godot).
-  - Scripts de setup inicial.
-- **Dependencias:** Ninguna
-- **Estimación:** 2-4 horas
+### **FASE 1: INFRAESTRUCTURA BASE**
+
+#### 1.1 Estructura del Proyecto
+- **Estado:** ✅ Completada
 
 #### 1.2 Base de Datos PostgreSQL
-- **Estado:** ✅ Completada y Validada  
-- **Prioridad:** Crítica  
-- **Descripción:** Implementar el esquema completo de DATABASE_SCHEMA.md y verificar funcionamiento con tests unitarios.
-- **Entregables:**
-  - Base de datos PostgreSQL funcionando.
-  - Todas las tablas creadas según esquema.
-  - Migraciones de SQLAlchemy configuradas.
-  - **Pruebas unitarias para todas las tablas/modelos (Tandas 1 a 5) pasando exitosamente.**
-  - Datos de prueba iniciales (con `manage.py seed` actualizado para todas las tandas).
-- **Dependencias:** 1.1 (Estructura del Proyecto)
-- **Estimación:** 15-20 horas (ajustado por depuración y tandas)
+- **Estado:** ✅ Completada y Validada
 
 ---
 
-### **FASE 2: CONEXIÓN BÁSICA ENTRE MÓDULOS**
+### **FASE 2: CONEXIÓN BÁSICA Y MUNDO SANDBOX**
 
-#### 2.1 Mundo de Prueba
-- **Estado:** 🔴 Pendiente  
-- **Prioridad:** Alta  
-- **Descripción:** Crear un mundo básico en Godot que pueda ser modificado desde un panel de administración.
+#### 2.1 Mundo Sandbox Editable
+- **Estado:** ✅ **Completada (Base Funcional)**
+- **Prioridad:** Crítica
+- **Descripción:** Se ha implementado la lógica para que Godot se conecte al `Mundo Sandbox` definido en la base de datos. El terreno se genera proceduralmente usando `FastNoiseLite`, y sus parámetros (`terrain_size`, `noise_octaves`, etc.) se leen correctamente desde la configuración del mundo en la DB. Las instancias de NPCs asociadas a este mundo también se cargan.
 - **Entregables:**
-  - Mundo base en Godot con terreno simple.
-  - API endpoints en Flask para gestionar propiedades del `Mundo` (Crear/Leer/Actualizar).
-  - Panel de administración (React) para editar propiedades del mundo.
-  - Verificación de la sincronización de datos Backend → Godot.
-- **Dependencias:** 1.1, 1.2
-- **Estimación:** 6-8 horas
+  - ✅ Conexión Godot -> Backend para obtener datos del mundo.
+  - ✅ Generación de terreno voxel procedural basado en `semilla` y `configuracion_actual`.
+  - ✅ Instanciación de NPCs en sus posiciones correctas.
+  - 🚧 **Pendiente:** Depuración de la física del terreno para que sea sólido.
 
 #### 2.2 Bastión (Personaje Jugador)
-- **Estado:** 🔴 Pendiente  
-- **Prioridad:** Alta  
-- **Descripción:** Implementar el personaje del Bastión en Godot con características editables desde el panel de administración.
+- **Estado:** ⏳ **En Progreso**
+- **Prioridad:** Crítica
+- **Descripción:** Se ha implementado el script `Player.gd` para el personaje jugador. El script carga los datos del `Bastion` desde el backend y permite el control de movimiento (WASD) y cámara (ratón). Actualmente se encuentra en fase de depuración para solucionar problemas de visibilidad y colisiones.
 - **Entregables:**
-  - Script Bastión en Godot conectado a la base de datos (a través del Backend).
-  - API endpoints en Flask para gestionar `Bastion` (Crear/Leer/Actualizar).
-  - Panel de administración (React) para modificar características del Bastión.
-  - Verificación de sincronización Panel → BD → Godot.
-- **Dependencias:** 2.1 (Reutilizar conexión a Godot y patrones de API)
-- **Estimación:** 8-10 horas
+  - ✅ Script de `Player.gd` con lógica de movimiento y cámara.
+  - ✅ Conexión con el backend para cargar datos iniciales del Bastión.
+  - 🚧 **Pendiente:** Solucionar el bug que impide ver el modelo del personaje.
+  - 🚧 **Pendiente:** Solucionar el bug de colisiones que provoca que el personaje caiga a través del suelo.
 
 ---
 
-### **FASE 3: NPCs Y VISUALIZACIÓN**
+### **PRÓXIMOS PASOS INMEDIATOS**
 
-#### 3.1 NPC de Prueba
-- **Estado:** 🔴 Pendiente  
-- **Prioridad:** Alta  
-- **Descripción:** Crear sistema completo de NPCs (definición de tipos e instancias) desde el panel de administración y visualizarlos en Godot.
-- **Entregables:**
-  - API completa para `TipoNPC` e `InstanciaNPC` (Crear/Leer/Actualizar/Borrar).
-  - Panel de administración (React) para crear y editar `TipoNPC` e `InstanciaNPC`.
-  - NPCs funcionales en Godot, cargados desde el backend, con IA básica (movimiento aleatorio).
-- **Dependencias:** 2.2
-- **Estimación:** 10-12 horas
+1.  **[CRÍTICO] Debugging de Física y Visualización:**
+    * **Objetivo:** Solucionar el bug de "caída al vacío".
+    * **Acción:** Verificar y corregir la configuración de **Capas y Máscaras de Colisión** (`Collision Layers/Masks`) en el editor de Godot para el jugador y los objetos del mundo. Implementar un "suelo de emergencia" para garantizar una base sólida.
+    * **Objetivo:** Solucionar el bug del "personaje invisible".
+    * **Acción:** Asegurar que el script `Player.gd` cree una malla visual por defecto (cápsula magenta) y que la cámara (`SpringArm3D`) esté configurada con una distancia (`spring_length`) para garantizar una vista en tercera persona.
+2.  **Verificación Visual de NPCs:**
+    * **Objetivo:** Confirmar que los NPCs son visibles en el mundo.
+    * **Acción:** Implementar una malla visual por defecto (cubos de colores) para los NPCs para que sean fácilmente identificables.
+3.  **Refinamiento de Controles:**
+    * **Objetivo:** Asegurar que el personaje se mueve y salta correctamente sobre el terreno sólido.
+    * **Acción:** Probar los controles de movimiento una vez que el personaje colisione correctamente.
 
-#### 3.2 Tipos y Visualizaciones de NPCs
-- **Estado:** 🔴 Pendiente  
-- **Prioridad:** Media  
-- **Descripción:** Extender la funcionalidad de NPCs para probar diferentes tipos de NPCs (Constructor, Comerciante, Malvado, Mago) y su visualización dinámica según el `id_grafico`.
+
+### **FASE 3: Contenido de Tipos y Comportamientos (Enfoque Scrum - Nivel de Feature)**
+
+#### 3.1 Tipos de Entidades Base (NPCS, Animales, Recursos Terreno)
+- **Estado:** 🔴 Pendiente
+- **Prioridad:** Media
+- **Descripción:** Implementar la gestión de las "definiciones" o "tipos" de entidades que se usarán para poblar los mundos. Esto incluye `TipoNPC`, `TipoAnimal`, `TipoRecursoTerreno`, `TipoEdificio`, `TipoMision`, `TipoEventoGlobal`, `TipoPista`, `TipoComercianteOferta`, `TipoLootTable`.
 - **Entregables:**
-  - Implementación de lógica de IA básica para los diferentes `rol_npc` en Godot.
-  - Carga dinámica de assets gráficos en Godot basada en `TipoNPC.id_grafico`.
-  - Verificación de que las `resistencia_dano` y `valores_rol` de `TipoNPC` se cargan correctamente en Godot.
-- **Dependencias:** 3.1
-- **Estimación:** 6-8 horas
+  - APIs CRUD para todas estas tablas de `Tipo_`.
+  - Páginas de panel de administración para definir estos tipos de entidades.
+  - El `seed` de `manage.py` se expande para incluir ejemplos de estos tipos.
+- **Dependencias:** 2.1 (El Mundo Sandbox es el lienzo para probar estos tipos)
+- **Estimación:** 15-20 horas (ya tenemos los modelos y esquemas, esto es API y Frontend)
+
+#### 3.2 Comportamientos y Visualizaciones Avanzadas de Entidades
+- **Estado:** 🔴 Pendiente
+- **Prioridad:** Media
+- **Descripción:** Desarrollar la lógica de comportamiento y visualización avanzada para las entidades.
+- **Entregables:**
+  - Lógica de IA para `TipoNPC.rol_npc` (Constructor, Malvado, Comerciante, Mago).
+  - Lógica de IA para `TipoAnimal.comportamiento_tipo` (Hostil, Pacífico, Territorial).
+  - Carga dinámica de assets 3D/2D en Godot basada en `id_grafico`, incluyendo ajuste de tamaño y hitbox.
+  - Implementación de `resistencia_dano` y `efectividad_herramienta`.
+- **Dependencias:** 3.1 (necesita los Tipos definidos)
+- **Estimación:** 15-20 horas
 
 ---
 
 ### **FASE 4: DESPLIEGUE Y COLABORACIÓN**
 
 #### 4.1 Despliegue en Render
-- **Estado:** 🔴 Pendiente  
-- **Prioridad:** Alta  
-- **Descripción:** Subir el backend y el frontend de administración a Render para permitir la colaboración remota.
-- **Entregables:**
-  - Backend (Flask API) desplegado en Render.
-  - Frontend (React Panel de Administración) desplegado en Render.
-  - Base de datos PostgreSQL en la nube (proveedor a definir, ej. Render's PostgreSQL).
-  - Documentación de URLs y accesos para el equipo.
-- **Dependencias:** 3.1 (backend funcional), 3.2 (frontend funcional)
+- **Estado:** 🔴 Pendiente
+- **Prioridad:** Alta
+- **Descripción:** Subir backend y frontend a Render para colaboración.
+- **Entregables:** Backend y Frontend desplegados y accesibles; DB remota; Godot se conecta a la API remota.
+- **Dependencias:** 2.1 (Backend y Frontend funcional), 2.2 (Backend para Bastion)
 - **Estimación:** 4-6 horas
 
 #### 4.2 Distribución del Juego (Godot)
-- **Estado:** 🔴 Pendiente  
-- **Prioridad:** Media  
-- **Descripción:** Hacer una versión ejecutable del juego Godot accesible para pruebas externas por diseñadores e historiadores.
-- **Entregables:**
-  - Build del juego para múltiples plataformas (ej. Windows, macOS) O
-  - Instrucciones detalladas para ejecutar el proyecto Godot directamente desde el repositorio.
-  - Guía de instalación y conexión al backend desplegado para testers.
-- **Dependencias:** 4.1 (Backend desplegado para que Godot se conecte)
+- **Estado:** 🔴 Pendiente
+- **Prioridad:** Media
+- **Descripción:** Generar builds del juego y establecer proceso de distribución para testers.
+- **Entregables:** Builds ejecutables del juego; Instrucciones de instalación/ejecución; Feedback loop establecido.
+- **Dependencias:** 4.1
 - **Estimación:** 3-4 horas
 
 ---
 
-### **FASE 5: ENTIDADES AVANZADAS**
+### **FASE 5: SISTEMAS DE JUEGO CENTRALES**
 
-#### 5.1 Sistema de Animales
-- **Estado:** 🔴 Pendiente  
-- **Prioridad:** Media  
-- **Descripción:** Crear sistema completo de animales (definición de tipos e instancias) editable desde el panel de administración.
-- **Entregables:**
-  - API para `TipoAnimal` e `InstanciaAnimal`.
-  - Panel de administración (React) para gestionar animales.
-  - Animales funcionales en Godot con IA básica (movimiento, comportamiento hostil/pacífico).
-  - Implementación de domesticación (`nivel_carino`) y monturas.
-- **Dependencias:** 4.1
-- **Estimación:** 8-10 horas
-
-#### 5.2 Sistema de Aldeas Completo
-- **Estado:** 🔴 Pendiente  
-- **Prioridad:** Media  
+#### 5.1 Sistema de Aldeas Completo
+- **Estado:** 🔴 Pendiente
+- **Prioridad:** Media
 - **Descripción:** Implementar aldeas con edificios, gestión de inventario, relaciones con NPCs y funciones de producción.
-- **Entregables:**
-  - API completa para `InstanciaAldea` e `InstanciaEdificio`.
-  - Panel de administración (React) para gestionar aldeas y sus edificios.
-  - Sistema de construcción de edificios en Godot.
-  - Lógica de producción de recursos en aldeas.
-  - Interacciones entre `InstanciaNPC` y `InstanciaAldea` (ej. NPCs constructores usando inventario de aldea).
-- **Dependencias:** 5.1
+- **Entregables:** API para `InstanciaAldea` e `InstanciaEdificio`; Panel admin para aldeas y edificios; Sistema de construcción en Godot; Lógica de producción; Interacción de NPCs constructores.
+- **Dependencias:** 2.1 (Mundo Sandbox), 3.1 (Tipos de Edificio, NPC Constructor)
 - **Estimación:** 15-20 horas
 
----
-
-### **FASE 6: INTEGRACIÓN DE SISTEMAS**
-
-#### 6.1 Integración Bastión-Entidades
-- **Estado:** 🔴 Pendiente  
-- **Prioridad:** Media  
-- **Descripción:** Conectar el Bastión del jugador con las `InstanciaNPC`, `InstanciaAnimal` e `InstanciaAldea` para interacciones completas.
-- **Entregables:**
-  - Sistema de interacciones jugador-NPC (diálogo, combate, comercio, misiones).
-  - Sistema de interacciones jugador-animal (caza, recolección, domesticación, montaje).
-  - Sistema de interacciones jugador-aldea (comercio, ayuda, ataque).
-  - Inventario funcional de jugador (recolectar, usar, equipar `TipoObjeto`).
-- **Dependencias:** 5.2
-- **Estimación:** 10-12 horas
-
-#### 6.2 Sistema de Clanes
-- **Estado:** 🔴 Pendiente  
-- **Prioridad:** Media  
-- **Descripción:** Implementar el sistema completo de clanes y sus funcionalidades.
-- **Entregables:**
-  - API para gestión de clanes (creación, unirse, salir, expulsar).
-  - Panel de administración (React) para gestionar clanes y sus miembros.
-  - Funcionalidades de clan en Godot (comunicación, gestión de miembros, acceso a Baluarte).
-  - Sistema de inventario de clan (Baluarte).
-- **Dependencias:** 6.1
+#### 5.2 Sistema de Clanes
+- **Estado:** 🔴 Pendiente
+- **Prioridad:** Media
+- **Descripción:** Implementar el sistema completo de clanes (creación, gestión de miembros, Baluarte).
+- **Entregables:** API para clanes; Panel admin; Funcionalidades de clan en Godot; Inventario de clan.
+- **Dependencias:** 2.1 (Mundo Sandbox), 2.2 (Bastion), 3.1 (Usuario, Clan)
 - **Estimación:** 12-15 horas
 
----
-
-### **FASE 7: EVENTOS Y MUNDOS AVANZADOS**
-
-#### 7.1 Primer Evento/Desastre
-- **Estado:** 🔴 Pendiente  
-- **Prioridad:** Baja  
-- **Descripción:** Crear el primer `TipoEventoGlobal` funcional que altere dinámicamente el `Mundo` del Clan.
-- **Entregables:**
-  - API para `TipoEventoGlobal` y `EventoGlobalActivo`.
-  - Panel de administración (React) para gestionar eventos.
-  - Implementación del primer evento en Godot, con activación automática y efectos visuales/de juego.
-  - Lógica de consecuencias automáticas (`consecuencia_fracaso`, `recompensa_exito`).
-- **Dependencias:** 6.2
+#### 5.3 Misiones y Eventos
+- **Estado:** 🔴 Pendiente
+- **Prioridad:** Media
+- **Descripción:** Implementar el sistema de misiones y eventos globales.
+- **Entregables:** API para `MisionActiva` y `EventoGlobalActivo`; Panel admin; Lógica de misiones en Godot (aceptar, progresar, completar); Lógica de eventos en Godot (activación, efectos, objetivos).
+- **Dependencias:** 2.1 (Mundo Sandbox), 3.1 (Tipos de Misión, Evento)
 - **Estimación:** 15-20 horas
 
-#### 7.2 Mundos Múltiples y Épocas
-- **Estado:** 🔴 Pendiente  
-- **Prioridad:** Baja  
-- **Descripción:** Implementar la gestión de múltiples mundos (Clan y Personal) y la progresión entre Épocas.
-- **Entregables:**
-  - Sistema de cambio de mundo en Godot.
-  - Lógica de reinicio/reconfiguración del `Mundo` del Clan al final de cada Época.
-  - Persistencia de progreso y transferencia limitada de ítems/habilidades entre Épocas a través del Baluarte del Clan.
-- **Dependencias:** 7.1
+---
+
+### **FASE 6: ESCALABILIDAD Y REJUGABILIDAD**
+
+#### 6.1 Interacción y Progresión Jugador-Entidad
+- **Estado:** 🔴 Pendiente
+- **Prioridad:** Alta
+- **Descripción:** Conectar el Bastión con NPCs, animales y aldeas para interacciones completas de juego.
+- **Entregables:** Combate Jugador-Entidad; Recolección; Comercio; Domesticación/Montura; Misiones (todo integrado en Godot).
+- **Dependencias:** 2.2 (Bastión), 3.2 (Comportamientos de Entidades), 5.1 (Animales), 5.2 (Aldeas), 5.3 (Misiones, Eventos).
+- **Estimación:** 15-20 horas
+
+#### 6.2 Mundos Múltiples (Personal/Clan) y Épocas
+- **Estado:** 🔴 Pendiente
+- **Prioridad:** Media
+- **Descripción:** Implementar la gestión de múltiples mundos y el sistema de Épocas para rejugabilidad.
+- **Entregables:** Lógica para crear y gestionar Mundos Personales/de Clan; Transición entre mundos; Lógica de reinicio de Época; Persistencia de progreso selectivo entre Épocas.
+- **Dependencias:** 2.1 (Fundamento de Mundo), 5.2 (Clanes), 5.3 (Eventos).
 - **Estimación:** 20-25 horas
 
 ---
 
-### **FASE 8: EXPANSIÓN (Futuro)**
+### **FASE 7: EXPANSIÓN (Futuro)**
 
-#### 8.1 Funcionalidades Avanzadas
-- **Estado:** 🔴 Pendiente  
-- **Prioridad:** Baja  
-- **Descripción:** Características avanzadas del juego (ej. crafteo complejo, árboles de habilidades, eventos comunitarios fuera de pantalla).
-- **Notas:** Se definirá según el progreso de fases anteriores y el feedback.
+#### 7.1 Funcionalidades Avanzadas
+- **Estado:** 🔴 Pendiente
+- **Prioridad:** Baja
+- **Descripción:** Características adicionales (crafteo complejo, árboles de habilidades, eventos fuera de pantalla).
+- **Notas:** Se definirá según progreso de fases anteriores y feedback.
 
 ---
 
 ## 🚀 Próximos Pasos Inmediatos (Para la Siguiente Sesión de Gemini)
 
 ### Esta Semana
-1.  **[CRÍTICO]** Iniciar la Fase 2: **Mundo de Prueba** (Tarea 2.1).
-    * Implementar API para `Mundo` (CRUD).
-    * Crear formulario en el panel de admin para `Mundo`.
-    * Cargar datos de `Mundo` en Godot y visualizar un terreno básico.
+1.  **[CRÍTICO]** Continuar **Fase 2.1: Mundo Sandbox Editable y Editor de Contenido In-World**.
+    * **Paso 1: Identificar/Crear el Mundo Sandbox:** Asegurarnos de que un `Mundo` con `nombre="Mundo Sandbox para Devs"` exista en la DB y que Godot lo cargue. (ESTO YA ESTÁ HECHO Y VERIFICADO EN TU ÚLTIMA SALIDA).
+    * **Paso 2: Godot Engine - Cargar el Mundo Sandbox por Defecto** (ESTO YA ESTÁ HECHO Y VERIFICADO EN TU ÚLTIMA SALIDA).
+    * **Paso 3: Backend API para `InstanciaNPC` (CRUD básico):** (ESTO YA ESTÁ HECHO EN `admin_routes.py`).
+    * **Paso 4: Frontend para `InstanciaNPCAdminPage.jsx` (Formulario y Lista):** (ESTO YA ESTÁ HECHO).
+    * **Paso 5: Godot Engine - Instanciación de `InstanciaNPC` en el Mundo Sandbox:** Que Godot cargue los NPCs creados para el Mundo Sandbox. (ESTO YA ESTÁ HECHO Y VERIFICADO EN TU ÚLTIMA SALIDA).
+    * **Paso 6: Godot Engine - Implementar Control Básico de Cámara/Jugador (`Player.gd` y `main_scene.tscn`):** Permite moverte por el mundo y ver los NPCs. (LO QUE EMPEZAMOS A HACER).
+    * **Paso 7: Backend API para `Bastion` (CRUD básico):** Para poder editar los stats del Bastión desde el panel.
+    * **Paso 8: Frontend para `BastionAdminPage.jsx`:** Para editar el Bastión.
+    * **Paso 9: Godot Engine - Cargar y Sincronizar Stats del Bastión:** Conectar `Player.gd` al backend para mostrar y actualizar los stats.
 
-### Siguientes 2 Semanas  
-1.  Completar **Bastión (Personaje Jugador)** editable (Tarea 2.2).
-2.  Implementar **NPCs de Prueba** (Tarea 3.1).
+### Siguientes 2 Semanas
+1.  Comenzar **Fase 3.1 Tipos de Entidades Base** (APIs y Paneles para el resto de Tipos: `TipoAnimal`, `TipoEdificio`, etc.).
 
 ---
 
 ## 📋 Notas Importantes para Nuevos Chats / Colaboradores
 
 ### Contexto Clave
--   [cite_start]**Proyecto:** Videojuego multijugador de misterio y supervivencia [cite: 1]
--   [cite_start]**Arquitectura:** Godot + Flask + PostgreSQL + React [cite: 1]
--   [cite_start]**Filosofía:** Diseño Data-Driven (contenido editable sin código) [cite: 1]
--   [cite_start]**Objetivo:** Que historiadores/diseñadores puedan crear contenido fácilmente [cite: 1]
+-   **Proyecto:** Videojuego multijugador de misterio y supervivencia
+-   **Arquitectura:** Godot + Flask + PostgreSQL + React
+-   **Filosofía:** Diseño Data-Driven (contenido editable sin código)
+-   **Objetivo:** Que historiadores/diseñadores puedan crear contenido fácilmente
 
 ### Archivos de Referencia Esenciales (Confirmados y Actualizados)
--   `PROJECT_OVERVIEW.md` - Visión completa del juego (este documento).
--   `DATABASE_SCHEMA.md` - Esquema detallado de la BD (todas las tablas y atributos finales, con proyección a Godot).
+-   `PROJECT_OVERVIEW.md` - Visión completa del juego.
+-   `DATABASE_SCHEMA.md` - Esquema detallado de la BD.
 -   `DEVELOPMENT_GUIDELINES.md` - Guías técnicas y de colaboración.
 -   `CURRENT_TASK_PROGRESS.md` - Estado actual de las tareas del proyecto (este documento).
 
 ### Estado Técnico Actual
 -   **Completado:** Todas las definiciones de modelos de base de datos ORM están completas y se ha validado su funcionalidad con tests unitarios exhaustivos (Tandas 1 a 5).
--   **En progreso:** Ninguno (listo para la siguiente fase).
--   **Bloqueadores:** Ninguno conocido.
--   **Decisiones técnicas tomadas:** Stack tecnológico completo definido; arquitectura data-driven confirmada.
+-   **En progreso:** Fase 2.1 Mundo Sandbox Editable y Editor de Contenido In-World. Ya se carga el mundo Sandbox y los NPCs son generados visualmente.
+-   **Bloqueadores:** Falta el control de cámara/jugador en Godot para ver los NPCs, e integrar la edición de stats del Bastión desde el panel.
+-   **Decisiones técnicas tomadas:** Stack tecnológico completo definido; arquitectura data-driven confirmada; enfoque en Mundo Sandbox para desarrollo.
 
 ### Para Empezar Desarrollo
 1.  Siempre revisar este documento (`CURRENT_TASK_PROGRESS.md`) primero.
@@ -260,10 +218,13 @@
 
 ## 🔄 Log de Cambios
 
-| Fecha       | Cambio                                                                                                                                                                                                                                                                         | Responsable |
+| Fecha       | Actualización                                                                                                                                                                                                                                                                         | Responsable |
 | :---------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------- |
-| 2025-01-28  | [cite_start]Creación inicial del documento con todas las tareas prioritarias. [cite: 2]                                                                                                                                                                                                            | Sistema     |
-| 2025-07-19  | Completada y validada la "Fase 1.2 Base de Datos PostgreSQL", incluyendo todos los modelos, esquemas y la aprobación de todos los tests unitarios (Tandas 1 a 5). Actualización de la estructura de carpetas `backend/`. Definiciones de `resistencia_dano` y `efectividad_herramienta`. | Humano/AI   |
+| 2025-01-28  | Creación inicial del documento con todas las tareas prioritarias.                                                                                                                                                                                                            | Sistema     |
+| 2025-07-19  | Completada y validada la "Fase 1.2 Base de Datos PostgreSQL".                                                                                                                                                                                                           | Humano/AI   |
+| 2025-07-19  | Reajuste del plan para priorizar "Mundo Sandbox Editable" y "Editor de Contenido In-World" (Fase 2.1). Fusión de Fase 3.1 inicial en Fase 2.1. Ajuste de descripciones y estimaciones de tareas futuras. | Humano/AI   |
+| 2025-07-19  | **Ajuste de la visión del panel de administración y mundos personales/clan:** Clarificación sobre la edición de entidades *dentro* de mundos personales por el administrador para misiones/interacciones. Detalle del panel en 3 páginas: Tipos, Gestión de Mundos (con editor In-World), Apariencias. Actualización de `PROJECT_OVERVIEW.md` y `DEVELOPMENT_GUIDELINES.md`. | Humano/AI   |
+| 2025-07-20  | **Confirmación de Godot Sandbox World y NPC generation:** Se verificó que el mundo sandbox se carga y los NPCs se generan visualmente, aunque la cámara/control de jugador es una limitación actual. Se actualiza el `CURRENT_TASK_PROGRESS.md`. | Humano/AI   |
 
 ---
 

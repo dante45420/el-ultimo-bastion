@@ -24,6 +24,10 @@ class CriaturaVivaBaseSchema(Schema):
     id_danio = fields.Int(required=True)
     id_inventario = fields.Int(required=True)
 
+    # Añadir anidaciones aquí también para que CriaturaViva_Base incluya Daño e Inventario
+    danio = fields.Nested(DañoSchema, dump_only=True)
+    inventario = fields.Nested(InventarioSchema, dump_only=True)
+
 # --- Esquemas para los Tipos (configuración) - Tanda 2 ---
 
 class TipoObjetoSchema(Schema):
@@ -185,10 +189,15 @@ class BastionSchema(Schema):
     nombre_personaje = fields.Str(required=True, validate=validate.Length(min=3, max=255))
     nivel = fields.Int(load_default=1, validate=validate.Range(min=1))
     experiencia = fields.Int(load_default=0, validate=validate.Range(min=0))
-    posicion_actual = fields.Raw(required=True) # {"x": 0, "y": 0, "z": 0, "mundo": "CLAN_MUNDO_ACTUAL"}
+    posicion_actual = fields.Raw(required=True) # {"x": 0, "y": 0, "z": 0, "mundo_id": 1}
     habilidades_aprendidas = fields.List(fields.Int(), load_default=[])
     id_criatura_viva_base = fields.Int(required=True)
 
+    # Incluir los esquemas anidados para la salida (dump_only=True)
+    # Esto es crucial para que el frontend pueda acceder a estos datos
+    criatura_viva_base = fields.Nested(CriaturaVivaBaseSchema, dump_only=True)
+    usuario = fields.Nested(UsuarioSchema, dump_only=True, exclude=('password_hash',))
+    clan = fields.Nested(ClanSchema, dump_only=True, exclude=('id_inventario_baluarte',))
 
 class MundoSchema(Schema):
     id = fields.Int(dump_only=True)

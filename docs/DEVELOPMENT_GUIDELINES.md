@@ -1,3 +1,8 @@
+---
+
+### **2. `DEVELOPMENT_GUIDELINES.md` (Actualizado)**
+
+```markdown
 # Guía de Desarrollo para "El Último Bastión"
 
 ## 1. Filosofía de Desarrollo
@@ -9,11 +14,11 @@
 
 ## 2. Stack Tecnológico
 
-* **Motor de Juego:** Godot Engine (GDScript, con opción a C# o C++ para optimizaciones).
+* **Motor de Juego:** Godot Engine (**v4.1.1 o superior**).
+    > **Nota Crítica:** El proyecto está desarrollado sobre Godot 4. La API de esta versión es significativamente diferente a la de Godot 3. Cualquier desarrollo o consulta de documentación debe hacerse específicamente para Godot 4 para evitar errores fundamentales (ej. el manejo de `FastNoiseLite`).
 * **Backend / API:** Python con Flask.
 * **Base de Datos:** PostgreSQL.
 * **Frontend (Panel de Administración):** React con Vite.
-* **Comunicación entre Servicios:** HTTP REST (JSON) y/o WebSockets (para tiempo real si es necesario).
 
 ## 3. Flujo de Trabajo y Colaboración
 
@@ -36,34 +41,51 @@
     * **Integración:** Asegurarse de que los módulos se comunican correctamente (ej. crear NPC en panel, verlo en Godot).
 4.  **Documentación:** **¡Crucial!** Cada funcionalidad o clase nueva debe documentarse inmediatamente.
 
-## 4. Directrices para Historiadores y Diseñadores (Uso del Panel de Administración)
+## 4. Directrices para Historiadores y Diseñadores (Uso del Panel de Administración - NUEVO ENFOQUE)
 
-El panel de administración es su principal herramienta para crear contenido del juego. No se requiere saber programar, pero sí entender cómo se estructuran los datos.
+El panel de administración se concibe como una herramienta central para la creación y gestión del contenido del juego a diferentes niveles:
 
-* **Acceso al Panel:** Se les proporcionará una URL y credenciales de acceso al panel de administración (ej. `http://localhost:5173` en desarrollo, URL de producción después).
-* **Campos de Formulario y su Impacto:**
-    * Cada formulario en el panel corresponde a un "Tipo" de entidad (ej. TipoNPC, TipoObjeto).
-    * **Nombre:** El nombre que aparecerá en el juego.
-    * **Descripción:** Texto que ayuda a entender el propósito o lore de la entidad.
-    * **ID Gráfico:** **Este es un identificador clave.** Es una cadena de texto (ej. "goblin_a_sprite", "longsword_mesh") que el motor Godot usará para saber qué recurso visual (modelo 3D, sprite, textura) cargar para esta entidad.
-        * **Preguntar a los Artistas:** El equipo de arte les proporcionará una lista de IDs gráficos disponibles y las convenciones.
-        * **Consistencia:** Usen exactamente los IDs proporcionados para que los gráficos aparezcan correctamente.
-    * **Valores Numéricos (Salud, Daño, etc.):** Impactan directamente las mecánicas del juego. Experimenten con ellos para balancear el juego.
-    * **Campos JSON (ej. `loot_posible`, `habilidades_activas`):**
-        * Estos campos requieren un formato JSON válido (objetos `{}` o arrays `[]`).
-        * **`loot_posible`:** Define qué objetos suelta un NPC y con qué probabilidad.
-            * Formato: `[{"id_objeto": ID_DEL_OBJETO, "probabilidad": 0.X}, ...]`
-            * `ID_DEL_OBJETO`: Es el ID numérico de un `TipoObjeto` ya creado.
-        * **`habilidades_activas`:** Lista de IDs de habilidades que el NPC puede usar.
-            * Formato: `[ID_HABILIDAD_1, ID_HABILIDAD_2, ...]`
-            * `ID_HABILIDAD_X`: Es el ID numérico de un `TipoHabilidad` ya creado.
-        * **Validación:** El panel podría dar errores si el JSON no es válido. Usen un validador JSON si es necesario.
-    * **Campos de Texto Libre (ej. `comportamiento_ia`):** Estos campos son descriptivos para los programadores. Sirven como una guía de diseño sobre cómo debería actuar la IA.
-* **Proceso de "Ver en el Juego":**
-    1.  Modificar o crear una entidad en el panel de administración y guardarla.
-    2.  El programador del motor de Godot ejecutará el juego (o lo recargará).
-    3.  El juego se conectará automáticamente al backend, cargará los datos más recientes y la entidad debería aparecer o comportarse según su definición.
-    4.  Reportar cualquier discrepancia o sugerencia a los desarrolladores en el canal de comunicación.
+### 4.1. Páginas Principales del Panel:
+
+* **"Definición de Tipos" (Genérica):**
+    * **Propósito:** Crear y gestionar las "plantillas" o "recetas" globales de los elementos del juego. Aquí se definen `TipoObjeto`, `TipoNPC`, `TipoAnimal`, `TipoEdificio`, `TipoHabilidad`, `TipoLootTable`, `TipoComercianteOferta`, `TipoMision`, `TipoEventoGlobal`, `TipoPista`.
+    * **Interfaz:** Formularios intuitivos con validación de entrada, listado de tipos creados.
+
+* **"Gestión de Mundos y Contenido In-World":**
+    * **Propósito:** Seleccionar una instancia de `Mundo` y poblarla/editarla con `Instancia`s de entidades.
+    * **Flujo:** Primero se selecciona un `Mundo` específico (ej., "Mundo Sandbox para Devs", o el Mundo Personal de un jugador específico, o un Mundo de Clan). Una vez seleccionado, se habilita el editor de contenido para ese mundo.
+    * **Edición de Geografía Global (para el `Mundo` seleccionado):**
+        * Modificar `Mundo.semilla_generacion`.
+        * Editar `Mundo.configuracion_actual` (ej. clima, nivel de peligro).
+        * (La edición granular de `Mundo.estado_actual_terreno` de forma visual es más compleja y se pospone, priorizando la creación de entidades).
+    * **Edición de Entidades In-World (Instancias):**
+        * Listas de `InstanciaNPC`, `InstanciaAnimal`, `InstanciaRecursoTerreno`, `InstanciaAldea`, `InstanciaEdificio`, `MisionActiva`, `EventoGlobalActivo` presentes en *ese `Mundo` seleccionado*.
+        * Formularios para añadir nuevas `Instancia`s a este mundo (seleccionando su `Tipo_` y `posicion`).
+        * Opciones para editar el estado de instancias existentes (ej., `posicion` de un NPC, `salud_actual` de un edificio, `esta_agotado` de un recurso, `estado_mision` de una misión activa).
+    * **Comportamiento por Tipo de Mundo (Visión Detallada):**
+        * **Mundo Sandbox:** Este será el foco de desarrollo inicial. Totalmente editable en esta página. Los cambios afectan solo a *esta instancia específica* de `Mundo` compartida por los desarrolladores para pruebas.
+        * **Mundos Personales:** Se pueden seleccionar Mundos Personales de jugadores específicos para editarlos. **Los NPCs, Aldeas, Animales, etc. *dentro de un mundo personal específico* pueden ser editados por el administrador para influir en misiones e interacciones individuales del jugador.** La `semilla_generacion` y `configuracion_actual` de un `Mundo` de tipo `PERSONAL` (si se hace desde la "Definición de Tipos" de `Mundo` y se aplica globalmente) afectaría a todos los Mundos Personales que compartan esa configuración. La "interacción" del jugador (completar misiones, domar animales) se realiza en Godot y se guarda en tablas vinculadas al jugador.
+        * **Mundo del Clan:** El panel permitirá crear nuevos "servidores de juego" (instancias de `Mundo` tipo `CLAN`), asignar clanes a ellos según nivel para equilibrar. La edición de eventos afectará a estos mundos de clan. Aquí la dinámica es más compleja por los ciclos de Épocas y reinicios.
+
+* **Página 3: "Gestión de Apariencias" / "Assets":**
+    * **Propósito:** Centralizar la gestión visual de los assets del juego.
+    * **Funcionalidad:**
+        * Listado de todos los `id_grafico` disponibles (para todos los `Tipo_`s).
+        * Poder asociar un `id_grafico` a sus propiedades visuales/físicas clave (ej. `escala_modelo`, `dimensiones_hitbox` - almacenadas en `valores_especificos` o `valores_rol` de los Tipos).
+        * **Previsualización:** La previsualización de cómo "queda" un asset se hará principalmente en Godot Engine.
+
+### 4.2. Campos de Formulario y su Impacto:
+
+* **`ID Gráfico`:** Es un identificador clave. Cadena de texto (ej. "goblin_a_sprite", "longsword_mesh") que Godot usará para cargar el recurso visual. Proporcionado por el equipo de arte.
+* **Campos JSON (ej. `valores_especificos`, `resistencia_dano`, `posicion`, `objetivos`):** Requieren formato JSON válido. Controlan parámetros complejos de comportamiento, interacción y estado.
+* **Valores Numéricos:** Afectan directamente las mecánicas del juego (salud, daño, velocidad).
+
+### 4.3. Proceso de "Ver en el Juego" (Debugging):
+
+1.  Modificar o crear una entidad en el panel de administración y guardarla.
+2.  El programador del motor de Godot ejecutará el juego (o lo recargará).
+3.  El juego se conectará automáticamente al backend, cargará los datos más recientes y la entidad debería aparecer o comportarse según su definición.
+4.  Reportar cualquier discrepancia o sugerencia a los desarrolladores en el canal de comunicación.
 
 ## 5. Pruebas y Retroalimentación
 
@@ -72,3 +94,35 @@ El panel de administración es su principal herramienta para crear contenido del
 * **Reporte de Bugs/Feedback:** Utilizar un sistema de seguimiento de tareas (ej. Trello, Jira, GitHub Issues) para reportar bugs, sugerir mejoras o dar feedback detallado.
 
 ---
+
+**5. GESTIÓN DE PROGRESO DE JUGADOR Y LOGEO (SANDBOX VS. PRODUCCIÓN):**
+
+* **Sistema de Logeo en Godot (Futuro):**
+    * El cliente Godot enviará credenciales (username/password) a un endpoint de autenticación en Flask (`backend/app/api/auth_routes.py`).
+    * Flask verificará contra la tabla `Usuario` y devolverá un token de sesión.
+    * Todas las llamadas API de Godot posteriores usarán este token para identificar al jugador.
+* **Gestión del Progreso (Sandbox vs. Personal/Clan - ENFOQUE ADAPTATIVO):**
+    * **Fase Actual (Desarrollo - Mundo Sandbox):**
+        * Godot se conectará **por defecto al `Mundo` de la base de datos cuyo `nombre_mundo` sea "Mundo Sandbox para Devs"**.
+        * Todos los desarrolladores y diseñadores compartirán este mismo `Mundo Sandbox`.
+        * El progreso del `Bastion` (jugador actual), `InstanciaNPC`, `InstanciaAldea`, etc., creado o modificado en el Sandbox se guardará en las tablas de `Instancia_` vinculadas al ID de ese `Mundo Sandbox`.
+        * **Progreso de Desarrolladores:** Inicialmente, cada desarrollador puede usar un `Bastion` de "desarrollador" pre-existente (del `seed`) que esté vinculado a este Mundo Sandbox. El progreso de ese `Bastion` se guarda en el Sandbox.
+    * **Transición a Producción (Mundo Personal/Clan - Más Adelante):**
+        * Cuando el juego esté cerca de producción, la lógica de Godot se adaptará:
+            * Al logearse, Godot consultará la tabla `Bastion` (o una nueva tabla `PlayerSession` vinculada al `Usuario`) para obtener el `id_mundo` al que debe conectarse el jugador (`Mundo` personal del jugador o `Mundo` de Clan al que pertenece su clan).
+            * **Mundos Personales:** Se crearán automáticamente para cada `Usuario` nuevo (`manage.py` o API de registro). El `Bastion` del jugador se vinculará a su `Mundo` personal. Godot cargará las `Instancia_`s vinculadas al `id_mundo` personal del jugador. **El administrador podrá editar estas instancias (`InstanciaNPC`, `InstanciaAldea`, etc.) para un mundo personal específico a través del panel de administración.**
+            * **Mundos de Clan:** Podría haber un `Mundo` de Clan principal por defecto, o varios `Mundo`s de Clan que se crean (y resetean por Épocas) y a los cuales se asignan los clanes. La lógica de Godot cargará las `Instancia_`s del `Mundo` de Clan al que pertenezca el `Bastion` del jugador.
+        * La clave es que la estructura de la base de datos ya está pensada para esto. Las tablas `Instancia_` (`InstanciaNPC`, `InstanciaAldea`, etc.) tienen un `id_mundo` que las vincula a una instancia específica de `Mundo`.
+
+---
+
+**4. DESAFÍOS IDENTIFICADOS (Y CONSIDERACIONES PARA COPILOT):**
+
+* **Gestión de Contexto en Chats Largos:** Los modelos de lenguaje tienden a perder el hilo en conversaciones extensas. **SOLUCIÓN:** Romper las solicitudes en pasos muy pequeños y atómicos. Nunca pidas "todo el juego" a la vez. Cada prompt debe ser una tarea específica y limitada.
+* **Plan de Inicio desde Cero con Colaboración Inmediata:** La dificultad de establecer un flujo de trabajo para que múltiples roles (devs, artistas, historiadores) puedan contribuir desde el principio con herramientas definidas y conectadas. **SOLUCIÓN:** La arquitectura modular y data-driven es la respuesta. Copilot debe ayudar a establecer las bases de cada módulo de forma independiente pero con puntos de conexión claros.
+* **Complejidad del Código vs. Escalabilidad:** El riesgo de que la complejidad del juego (narrativa, eventos) se traduzca en un código inmanejable. **SOLUCIÓN:** El diseño data-driven es la clave para la simplicidad y escalabilidad del código. Copilot debe priorizar la creación de clases base genéricas y la delegación de comportamientos a los datos. El código principal debe ser simple y extensible.
+* **Lentitud en el Desarrollo:** La necesidad de acelerar el progreso. **SOLUCIÓN:** Iteraciones rápidas, enfoque en prototipos funcionales y el uso eficiente de las herramientas.
+
+---
+
+**ESTRUCTURA DE REPOSITORIO (Confirmada):**
