@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://cardg18ft1ujs"]
+[gd_scene load_steps=7 format=3 uid="uid://cardg18ft1ujs"]
 
 [ext_resource type="Script" uid="uid://u0b6j7ifpabr" path="res://scripts/World.gd" id="1_pw63i"]
 [ext_resource type="Script" uid="uid://bdcreesn4vwhn" path="res://scripts/Data_Loader.gd" id="2_7ykc4"]
 [ext_resource type="Script" uid="uid://djmh37iobeqk1" path="res://scripts/Player.gd" id="3_7ykc4"]
 [ext_resource type="PackedScene" uid="uid://kfp0bwl5ufdn" path="res://components/HealthComponent.tscn" id="4_pu3yx"]
 [ext_resource type="PackedScene" uid="uid://iwxu40angn0w" path="res://components/HungerComponent.tscn" id="5_gubc5"]
+[ext_resource type="PackedScene" uid="uid://bie1gnb8r8b2e" path="res://components/InventoryComponent.tscn" id="6_rt2n2"]
 
 [node name="MainScene" type="Node3D"]
 
@@ -37,3 +38,5 @@ current = true
 [node name="HealthComponent" parent="PlayerCharacter" instance=ExtResource("4_pu3yx")]
 
 [node name="HungerComponent" parent="PlayerCharacter" instance=ExtResource("5_gubc5")]
+
+[node name="InventoryComponent" parent="PlayerCharacter" instance=ExtResource("6_rt2n2")]
