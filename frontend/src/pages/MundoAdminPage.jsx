@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { createMundo, getMundos, updateMundo, getUsuarios, getClanes } from '../api/adminApi';
 
-const MundoAdminPage = ({ onEditWorldContent }) => { // Recibe la prop onEditWorldContent
+const MundoAdminPage = ({ onEditWorldContent }) => {
     const [formData, setFormData] = useState({
         nombre_mundo: '',
         tipo_mundo: 'CLAN',
@@ -13,11 +13,11 @@ const MundoAdminPage = ({ onEditWorldContent }) => { // Recibe la prop onEditWor
         configuracion_actual: '{}'
     });
     const [mundos, setMundos] = useState([]);
-    const [usuarios, setUsuarios] = useState([]); // Para el dropdown de propietarios
-    const [clanes, setClanes] = useState([]);   // Para el dropdown de propietarios
+    const [usuarios, setUsuarios] = useState([]);
+    const [clanes, setClanes] = useState([]);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
-    const [editingMundoId, setEditingMundoId] = useState(null); // Para saber si estamos editando o creando
+    const [editingMundoId, setEditingMundoId] = useState(null);
 
     useEffect(() => {
         fetchMundos();
@@ -41,7 +41,7 @@ const MundoAdminPage = ({ onEditWorldContent }) => { // Recibe la prop onEditWor
             setClanes(clans);
         } catch (err) {
             console.error("Error fetching users/clans for dropdowns:", err);
-            setError('Error al cargar datos de usuarios/clanes para dropdowns: ' + (err.response?.data?.message || err.message)); // Mejorar mensaje
+            setError('Error al cargar datos de usuarios/clanes para dropdowns: ' + (err.response?.data?.message || err.message));
         }
     };
 
@@ -63,8 +63,8 @@ const MundoAdminPage = ({ onEditWorldContent }) => { // Recibe la prop onEditWor
         setFormData(prev => ({
             ...prev,
             tipo_mundo: newTipoMundo,
-            id_propietario_clan: '', // Limpiar el otro ID al cambiar de tipo
-            id_propietario_usuario: '' // Limpiar el otro ID al cambiar de tipo
+            id_propietario_clan: '',
+            id_propietario_usuario: ''
         }));
     };
 
@@ -77,6 +77,7 @@ const MundoAdminPage = ({ onEditWorldContent }) => { // Recibe la prop onEditWor
                 ...formData,
                 estado_actual_terreno: JSON.parse(formData.estado_actual_terreno),
                 configuracion_actual: JSON.parse(formData.configuracion_actual),
+                // Asegurarse de que los IDs sean null si están vacíos
                 id_propietario_clan: formData.id_propietario_clan ? parseInt(formData.id_propietario_clan) : null,
                 id_propietario_usuario: formData.id_propietario_usuario ? parseInt(formData.id_propietario_usuario) : null
             };
@@ -90,13 +91,13 @@ const MundoAdminPage = ({ onEditWorldContent }) => { // Recibe la prop onEditWor
                 setMessage('Mundo creado con éxito!');
             }
             
-            setFormData({ // Reset form
+            setFormData({
                 nombre_mundo: '', tipo_mundo: 'CLAN', id_propietario_clan: '',
                 id_propietario_usuario: '', semilla_generacion: '',
                 estado_actual_terreno: '{}', configuracion_actual: '{}'
             });
             setEditingMundoId(null);
-            fetchMundos(); // Refresh list
+            fetchMundos();
         } catch (err) {
             setError('Error al guardar Mundo: ' + (err.response?.data?.message || err.message));
         }
@@ -128,7 +129,6 @@ const MundoAdminPage = ({ onEditWorldContent }) => { // Recibe la prop onEditWor
         setError('');
     };
 
-
     return (
         <div style={{ padding: '20px', maxWidth: '1000px', margin: 'auto' }}>
             <h1>Administración de Mundos</h1>
@@ -136,9 +136,34 @@ const MundoAdminPage = ({ onEditWorldContent }) => { // Recibe la prop onEditWor
             {message && <p style={{ color: 'green' }}>{message}</p>}
             {error && <p style={{ color: 'red' }}>{error}</p>}
 
+            {/* Sección de Listado de Mundos Existentes - Más Prominente */}
+            <h2 style={{ marginTop: '30px', marginBottom: '15px' }}>Mundos Existentes:</h2>
+            <p style={{ marginBottom: '20px', color: '#666' }}>Selecciona un mundo para ver o editar su contenido (NPCs, Animales, Recursos).</p>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+                {mundos.map(mundo => (
+                    <li key={mundo.id} style={{ border: '1px solid #eee', padding: '10px', marginBottom: '10px', borderRadius: '5px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                        <div>
+                            <strong>{mundo.nombre_mundo}</strong> (ID: {mundo.id}) - Tipo: {mundo.tipo_mundo}<br />
+                            {mundo.tipo_mundo === 'CLAN' && <span>Propietario Clan ID: {mundo.id_propietario_clan}</span>}
+                            {mundo.tipo_mundo === 'PERSONAL' && <span>Propietario Usuario ID: {mundo.id_propietario_usuario}</span>}<br />
+                            Semilla: <code>{mundo.semilla_generacion || 'N/A'}</code>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                            <button onClick={() => handleEditClick(mundo)} style={{ padding: '5px 10px', backgroundColor: '#17a2b8', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Editar Configuración</button>
+                            <button onClick={() => onEditWorldContent(mundo.id)} style={{ padding: '5px 10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Editar Contenido de Mundo</button>
+                        </div>
+                    </li>
+                ))}
+            </ul>
+
+            {/* Sección de Crear/Editar Mundo - Colapsable o menos prominente */}
+            <h2 style={{ marginTop: '40px', marginBottom: '15px', borderTop: '1px solid #eee', paddingTop: '30px' }}>
+                {editingMundoId ? `Editar Configuración de Mundo (ID: ${editingMundoId})` : 'Crear Nuevo Mundo (Manual)'}
+            </h2>
+            <p style={{ marginBottom: '20px', color: '#666' }}>Esta opción es para la creación manual de mundos. Los mundos de jugadores y clanes se crearán automáticamente en el futuro.</p>
             <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', border: '1px solid #ccc', padding: '20px', borderRadius: '8px' }}>
                 <fieldset style={{ gridColumn: 'span 2', padding: '15px', borderRadius: '8px', border: '1px solid #ddd' }}>
-                    <legend>{editingMundoId ? `Editar Mundo (ID: ${editingMundoId})` : 'Crear Nuevo Mundo'}</legend>
+                    <legend>Detalles Básicos</legend>
                     <div style={{ display: 'grid', gap: '10px' }}>
                         <label>
                             Nombre del Mundo:
@@ -201,33 +226,6 @@ const MundoAdminPage = ({ onEditWorldContent }) => { // Recibe la prop onEditWor
                     )}
                 </div>
             </form>
-
-            <h2 style={{ marginTop: '30px' }}>Mundos Existentes:</h2>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-                {mundos.map(mundo => (
-                    <li key={mundo.id} style={{ border: '1px solid #eee', padding: '10px', marginBottom: '10px', borderRadius: '5px' }}>
-                        <strong>{mundo.nombre_mundo}</strong> (ID: {mundo.id}) - Tipo: {mundo.tipo_mundo}<br />
-                        {mundo.tipo_mundo === 'CLAN' && <span>Propietario Clan ID: {mundo.id_propietario_clan}</span>}
-                        {mundo.tipo_mundo === 'PERSONAL' && <span>Propietario Usuario ID: {mundo.id_propietario_usuario}</span>}<br />
-                        Semilla: <code>{mundo.semilla_generacion}</code><br />
-                        <details>
-                            <summary>Estado Actual Terreno</summary>
-                            <pre style={{ backgroundColor: '#f0f0f0', padding: '5px', borderRadius: '3px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                                {JSON.stringify(mundo.estado_actual_terreno, null, 2)}
-                            </pre>
-                        </details>
-                        <details>
-                            <summary>Configuración Actual</summary>
-                            <pre style={{ backgroundColor: '#f0f0f0', padding: '5px', borderRadius: '3px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                                {JSON.stringify(mundo.configuracion_actual, null, 2)}
-                            </pre>
-                        </details>
-                        <button onClick={() => handleEditClick(mundo)} style={{ marginTop: '5px', padding: '5px 10px', backgroundColor: '#17a2b8', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px' }}>Editar</button>
-                        {/* Nuevo botón para editar contenido del mundo */}
-                        <button onClick={() => onEditWorldContent(mundo.id)} style={{ marginTop: '5px', padding: '5px 10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Editar Contenido de Mundo</button>
-                    </li>
-                ))}
-            </ul>
         </div>
     );
 };

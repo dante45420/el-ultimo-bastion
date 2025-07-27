@@ -2,36 +2,34 @@
 import React, { useState } from 'react';
 import TipoObjetoAdminPage from './pages/TipoObjetoAdminPage';
 import MundoAdminPage from './pages/MundoAdminPage';
-import InstanciaNPCAdminPage from './pages/InstanciaNPCAdminPage';
 import BastionAdminPage from './pages/BastionAdminPage';
-import WorldContentEditorPage from './pages/WorldContentEditorPage'; // Importamos el nuevo editor
+import WorldContentEditorPage from './pages/WorldContentEditorPage';
+import TipoNPCAdminPage from './pages/TipoNPCAdminPage';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('mundos');
-  // Nuevo estado para manejar la edición de contenido de un mundo específico
   const [editingWorldId, setEditingWorldId] = useState(null);
 
   const handleEditWorldContent = (worldId) => {
     setEditingWorldId(worldId);
-    setCurrentPage('worldContentEditor'); // Cambiamos a la nueva página de edición
+    setCurrentPage('worldContentEditor');
   };
 
   const handleBackToWorlds = () => {
     setEditingWorldId(null);
-    setCurrentPage('mundos'); // Volvemos a la lista de mundos
+    setCurrentPage('mundos');
   };
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'tiposObjeto':
-        return <TipoObjetoAdminPage />;
       case 'mundos':
         return <MundoAdminPage onEditWorldContent={handleEditWorldContent} />;
-      case 'instanciasNPC':
-        return <InstanciaNPCAdminPage />;
+      case 'tiposObjeto':
+        return <TipoObjetoAdminPage />;
+      case 'tiposNPC': 
+        return <TipoNPCAdminPage />;
       case 'bastiones':
         return <BastionAdminPage />;
-      // Nuevo caso para mostrar el editor de contenido del mundo
       case 'worldContentEditor':
         return <WorldContentEditorPage worldId={editingWorldId} onBack={handleBackToWorlds} />;
       default:
@@ -39,18 +37,27 @@ function App() {
     }
   };
 
+  const navButtonStyle = {
+    padding: '10px 15px',
+    margin: '0 5px',
+    border: '1px solid #ccc',
+    background: '#f0f0f0',
+    cursor: 'pointer',
+    borderRadius: '5px'
+  };
+
   return (
-    <div style={{ display: 'flex', fontFamily: 'sans-serif' }}>
-      <nav style={{ width: '200px', borderRight: '1px solid #ccc', padding: '20px' }}>
-        <h2>El Último Bastión</h2>
-        <ul style={{ listStyle: 'none', padding: 0 }}>
-          <li style={{ marginBottom: '10px' }}><button onClick={() => setCurrentPage('mundos')}>Mundos</button></li>
-          <li style={{ marginBottom: '10px' }}><button onClick={() => setCurrentPage('tiposObjeto')}>Tipos de Objeto</button></li>
-          <li style={{ marginBottom: '10px' }}><button onClick={() => setCurrentPage('instanciasNPC')}>Instancias NPC (Global)</button></li>
-          <li style={{ marginBottom: '10px' }}><button onClick={() => setCurrentPage('bastiones')}>Bastiones</button></li>
-        </ul>
-      </nav>
-      <main style={{ flex: 1, padding: '20px' }}>
+    <div style={{ fontFamily: 'sans-serif' }}>
+      <header style={{ padding: '10px 20px', borderBottom: '2px solid #ccc', display: 'flex', alignItems: 'center', background: '#fff' }}>
+        <h1 style={{ margin: 0, fontSize: '24px' }}>El Último Bastión - Panel de Admin</h1>
+        <nav style={{ marginLeft: 'auto' }}>
+          <button style={navButtonStyle} onClick={() => setCurrentPage('mundos')}>Mundos</button>
+          <button style={navButtonStyle} onClick={() => setCurrentPage('tiposNPC')}>Crear Tipos de NPC</button>
+          <button style={navButtonStyle} onClick={() => setCurrentPage('tiposObjeto')}>Crear Tipos de Objeto</button>
+          <button style={navButtonStyle} onClick={() => setCurrentPage('bastiones')}>Bastiones</button>
+        </nav>
+      </header>
+      <main style={{ padding: '20px' }}>
         {renderPage()}
       </main>
     </div>

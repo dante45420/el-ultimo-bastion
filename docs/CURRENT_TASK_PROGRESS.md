@@ -6,10 +6,13 @@
 **Próximo hito:** Lograr que el personaje del jugador (Bastión) sea visible, controlable y no caiga a través del mundo.
 
 ### Resumen Ejecutivo
-- ✅ **Infraestructura Base Completa:** La base de datos, el backend y la estructura del proyecto son sólidos.
-- ✅ **Conexión Funcional:** Godot se conecta exitosamente al backend, carga los datos del mundo y los NPCs. El terreno se genera dinámicamente a partir de la base de datos.
-- ⏳ **En progreso:** Depuración de la física y la visualización del jugador en el "Mundo Sandbox". Se están resolviendo problemas de colisiones ("caída al vacío") y de visibilidad del personaje.
-- 🎯 **Objetivo inmediato:** Alcanzar un estado "jugable" básico donde el jugador puede moverse por un mundo sólido y ver a su personaje y a los NPCs.
+✅ ¡BASE JUGABLE ALCANZADA! Se ha solucionado el bug crítico de colisiones y visualización. El personaje del jugador (Bastión) es ahora visible, controlable (movimiento y cámara), y colisiona correctamente con un mundo generado dinámicamente.
+
+✅ Conexión Robusta: La comunicación entre Godot y el Backend es estable. Se ha verificado la carga de datos del mundo y de las entidades (NPCs).
+
+🎯 Nuevo Foco Estratégico: El objetivo inmediato es transformar el Panel de Administración en una herramienta de creación de contenido intuitiva y flexible, siguiendo la visión del "Creador de Arquetipos".
+
+
 
 ---
 
@@ -28,40 +31,40 @@
 ### **FASE 2: CONEXIÓN BÁSICA Y MUNDO SANDBOX**
 
 #### 2.1 Mundo Sandbox Editable
-- **Estado:** ✅ **Completada (Base Funcional)**
-- **Prioridad:** Crítica
-- **Descripción:** Se ha implementado la lógica para que Godot se conecte al `Mundo Sandbox` definido en la base de datos. El terreno se genera proceduralmente usando `FastNoiseLite`, y sus parámetros (`terrain_size`, `noise_octaves`, etc.) se leen correctamente desde la configuración del mundo en la DB. Las instancias de NPCs asociadas a este mundo también se cargan.
-- **Entregables:**
-  - ✅ Conexión Godot -> Backend para obtener datos del mundo.
-  - ✅ Generación de terreno voxel procedural basado en `semilla` y `configuracion_actual`.
-  - ✅ Instanciación de NPCs en sus posiciones correctas.
-  - 🚧 **Pendiente:** Depuración de la física del terreno para que sea sólido.
+Estado: ✅ Completada (Base Funcional)
+
+Comentarios: La lógica para cargar el Mundo Sandbox, generar su terreno y poblarlo con NPCs desde la base de datos es funcional. Los errores de conexión y de schema de la base de datos que encontramos en esta fase fueron críticos y nos enseñaron la importancia de mantener todo sincronizado.
+
+
 
 #### 2.2 Bastión (Personaje Jugador)
-- **Estado:** ⏳ **En Progreso**
-- **Prioridad:** Crítica
-- **Descripción:** Se ha implementado el script `Player.gd` para el personaje jugador. El script carga los datos del `Bastion` desde el backend y permite el control de movimiento (WASD) y cámara (ratón). Actualmente se encuentra en fase de depuración para solucionar problemas de visibilidad y colisiones.
-- **Entregables:**
-  - ✅ Script de `Player.gd` con lógica de movimiento y cámara.
-  - ✅ Conexión con el backend para cargar datos iniciales del Bastión.
-  - 🚧 **Pendiente:** Solucionar el bug que impide ver el modelo del personaje.
-  - 🚧 **Pendiente:** Solucionar el bug de colisiones que provoca que el personaje caiga a través del suelo.
+Estado: ✅ Completada (Base Funcional)
 
----
+Comentarios: El script Player.gd ahora carga correctamente los datos del Bastión (solucionando el error 404 por ID de usuario incorrecto), es visible (solucionando el bug de la cámara) y colisiona con el mundo (solucionando el bug de capas de colisión). Los bugs visuales menores (jugador a medias en el suelo) también han sido corregidos.
 
 ### **PRÓXIMOS PASOS INMEDIATOS**
 
-1.  **[CRÍTICO] Debugging de Física y Visualización:**
-    * **Objetivo:** Solucionar el bug de "caída al vacío".
-    * **Acción:** Verificar y corregir la configuración de **Capas y Máscaras de Colisión** (`Collision Layers/Masks`) en el editor de Godot para el jugador y los objetos del mundo. Implementar un "suelo de emergencia" para garantizar una base sólida.
-    * **Objetivo:** Solucionar el bug del "personaje invisible".
-    * **Acción:** Asegurar que el script `Player.gd` cree una malla visual por defecto (cápsula magenta) y que la cámara (`SpringArm3D`) esté configurada con una distancia (`spring_length`) para garantizar una vista en tercera persona.
-2.  **Verificación Visual de NPCs:**
-    * **Objetivo:** Confirmar que los NPCs son visibles en el mundo.
-    * **Acción:** Implementar una malla visual por defecto (cubos de colores) para los NPCs para que sean fácilmente identificables.
-3.  **Refinamiento de Controles:**
-    * **Objetivo:** Asegurar que el personaje se mueve y salta correctamente sobre el terreno sólido.
-    * **Acción:** Probar los controles de movimiento una vez que el personaje colisione correctamente.
+Nuestro objetivo ya no es solo "hacer que funcione", sino "hacer que sea fácil de crear". El plan se centra en construir el panel de administración como la herramienta definitiva para los diseñadores.
+
+[CRÍTICO] Hito 1: Reingeniería del Panel de Admin y Creador de Arquetipos de NPC
+
+Objetivo: Implementar el flujo de trabajo "Panel Primero" para la creación de NPCs.
+
+Acciones:
+
+Frontend: Rediseñar App.jsx con navegación superior. Crear la nueva página TipoNPCAdminPage.jsx con un formulario intuitivo que oculte la complejidad técnica (IDs, etc.). Simplificar el WorldNPCsEditor.jsx para que solo sirva para instanciar arquetipos, no para crearlos.
+
+Backend: Potenciar la API (admin_routes.py) para que el endpoint de creación de TipoNPC sea robusto y el de InstanciaNPC sea "inteligente", creando todos los componentes necesarios a partir de un arquetipo.
+
+Hito 2: Diferenciación Visual (Tamaño y Color)
+
+Objetivo: Que cada arquetipo de NPC pueda tener un tamaño y color únicos definidos desde el nuevo panel.
+
+Hito 3: Sistema de Combate y Recursos (Loot) Básico
+
+Objetivo: Implementar la capacidad de que el jugador ataque NPCs y que estos suelten objetos al morir, todo configurable desde el panel.
+
+
 
 
 ### **FASE 3: Contenido de Tipos y Comportamientos (Enfoque Scrum - Nivel de Feature)**

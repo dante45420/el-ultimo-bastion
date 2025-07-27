@@ -1,5 +1,6 @@
 # el-ultimo-bastion/backend/app/schemas.py
 from marshmallow import Schema, fields, validate
+from app import db
 
 # --- Esquemas para las clases base/componentes (Tanda 1) ---
 
@@ -78,17 +79,21 @@ class TipoNPCSchema(Schema):
     ]))
     comportamiento_ia = fields.Str(allow_none=True)
     habilidades_base = fields.List(fields.Int(), load_default=[])
-    valores_rol = fields.Raw(load_default={})
-    resistencia_dano = fields.Raw(load_default={})
+    valores_rol = fields.Raw(load_default={}) # Aquí se guardará hitbox_dimensions y color
+    resistencia_dano = fields.Raw(load_default={}) # {"TIPO_DAÑO": multiplicador}
 
-    # Campos que se envían desde el frontend para inicializar CriaturaViva_Base, Daño, Inventario
-    initial_salud_max = fields.Int(required=True, load_only=True)
-    initial_hambre_max = fields.Int(required=True, load_only=True)
-    initial_dano_ataque_base = fields.Int(required=True, load_only=True)
-    initial_velocidad_movimiento = fields.Decimal(required=True, load_only=True)
-    initial_inventario_capacidad_slots = fields.Int(required=True, load_only=True)
-    initial_inventario_capacidad_peso_kg = fields.Decimal(required=True, load_only=True)
-    initial_loot_table_id = fields.Int(allow_none=True, load_only=True)
+    # Campos "initial_X" del modelo TipoNPC, que son enviados por el frontend
+    # para inicializar la CriaturaViva_Base de las INSTANCIAS futuras.
+    # Son 'load_only=True' porque no queremos que se incluyan cuando el backend envía la lista de TiposNPCs.
+    initial_salud_max = fields.Int(load_only=True, load_default=100, validate=validate.Range(min=1))
+    initial_hambre_max = fields.Int(load_only=True, load_default=100, validate=validate.Range(min=1))
+    initial_dano_ataque_base = fields.Int(load_only=True, load_default=5, validate=validate.Range(min=0))
+    initial_velocidad_movimiento = fields.Decimal(load_only=True, load_default=3.0, validate=validate.Range(min=0.1))
+    initial_inventario_capacidad_slots = fields.Int(load_only=True, load_default=5, validate=validate.Range(min=1))
+    initial_inventario_capacidad_peso_kg = fields.Decimal(load_only=True, load_default=20.0, validate=validate.Range(min=0.1))
+    initial_loot_table_id = fields.Int(load_only=True, allow_none=True)
+
+
 
 class TipoAnimalSchema(Schema):
     id = fields.Int(dump_only=True)
@@ -222,6 +227,7 @@ class InstanciaNPCSchema(Schema):
     id_clan_pertenece = fields.Int(allow_none=True)
     id_persona_pertenece = fields.Int(allow_none=True)
     restriccion_area = fields.Raw(allow_none=True)
+    tipo_npc = fields.Nested(TipoNPCSchema, dump_only=True)
     valores_dinamicos = fields.Raw(load_default={})
 
 class InstanciaAnimalSchema(Schema):

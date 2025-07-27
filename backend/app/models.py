@@ -116,6 +116,16 @@ class TipoNPC(db.Model):
     valores_rol = db.Column(JSONB, default={})
     # ADICIÓN DE TIPO DE DAÑO/RESISTENCIA:
     resistencia_dano = db.Column(JSONB, default={}) # {"TIPO_DAÑO": multiplicador}
+    initial_salud_max = db.Column(db.Integer, default=100, nullable=False)
+    initial_hambre_max = db.Column(db.Integer, default=100, nullable=False)
+    initial_dano_ataque_base = db.Column(db.Integer, default=5, nullable=False)
+    initial_velocidad_movimiento = db.Column(db.Numeric(10, 2), default=3.0, nullable=False)
+    initial_inventario_capacidad_slots = db.Column(db.Integer, default=5, nullable=False)
+    initial_inventario_capacidad_peso_kg = db.Column(db.Numeric(10, 2), default=20.0, nullable=False)
+    initial_loot_table_id = db.Column(db.Integer, db.ForeignKey('tipoloottable.id'), nullable=True)
+
+    
+
 
     def __repr__(self):
         return f'<TipoNPC {self.nombre}>'

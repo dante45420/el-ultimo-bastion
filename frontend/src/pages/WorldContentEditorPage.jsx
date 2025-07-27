@@ -1,14 +1,13 @@
 // el-ultimo-bastion/frontend/src/pages/WorldContentEditorPage.jsx
 import React, { useState, useEffect } from 'react';
 import { getMundo } from '../api/adminApi';
-import WorldNPCsEditor from '../components/WorldNPCsEditor'; // Nuevo componente
-// Importar otros editores de instancia aquí cuando se creen
+import WorldNPCsEditor from '../components/WorldNPCsEditor';
 
 const WorldContentEditorPage = ({ worldId, onBack }) => {
     const [mundo, setMundo] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [currentTab, setCurrentTab] = useState('npcs'); // Pestaña actual: npcs, animals, etc.
+    const [currentTab, setCurrentTab] = useState('npcs');
 
     useEffect(() => {
         const fetchMundoDetails = async () => {
@@ -39,7 +38,6 @@ const WorldContentEditorPage = ({ worldId, onBack }) => {
             <h1>Editor de Contenido para "{mundo.nombre_mundo}" (ID: {mundo.id})</h1>
             <p>Tipo: {mundo.tipo_mundo} | Semilla: {mundo.semilla_generacion}</p>
 
-            {/* Navegación por pestañas */}
             <div style={{ display: 'flex', borderBottom: '1px solid #ccc', marginBottom: '20px' }}>
                 <button 
                     onClick={() => setCurrentTab('npcs')} 
@@ -53,10 +51,8 @@ const WorldContentEditorPage = ({ worldId, onBack }) => {
                 >
                     Animales (Próximamente)
                 </button>
-                {/* Añadir más pestañas aquí */}
             </div>
 
-            {/* Contenido de la pestaña actual */}
             {currentTab === 'npcs' && <WorldNPCsEditor worldId={worldId} />}
             {currentTab === 'animals' && <p>Editor de Animales en construcción...</p>}
         </div>

@@ -171,63 +171,60 @@ def update_mundo(mundo_id):
 # --- RUTAS CRUD PARA InstanciaNPC ---
 @admin_bp.route('/instancias_npc', methods=['POST'])
 def create_instancia_npc():
-    try:
-        data = instancia_npc_schema.load(request.json)
+    data = request.json
+    id_tipo_npc = data.get('id_tipo_npc')
+    id_mundo = data.get('id_mundo')
+    posicion = data.get('posicion')
 
-        if not db.session.get(TipoNPC, data['id_tipo_npc']):
-            return jsonify({"message": f"TipoNPC con ID {data['id_tipo_npc']} no encontrado."}), 404
-        if not db.session.get(Mundo, data['id_mundo']):
-            return jsonify({"message": f"Mundo con ID {data['id_mundo']} no encontrado."}), 404
-        
-        criatura_viva_base = None
-        if data.get('id_criatura_viva_base'):
-            criatura_viva_base = db.session.get(CriaturaViva_Base, data['id_criatura_viva_base'])
-            if not criatura_viva_base:
-                return jsonify({"message": f"CriaturaViva_Base con ID {data['id_criatura_viva_base']} no encontrada."}), 404
-        else:
-            # Crear Inventario, Daño y CriaturaViva_Base si no se proporciona un ID existente
-            new_inventario = Inventario(
-                capacidad_slots=data.get('initial_inventario_capacidad_slots', 5),
-                capacidad_peso_kg=data.get('initial_inventario_capacidad_peso_kg', 10.0)
-            )
-            new_danio = Daño(
-                salud_actual=data.get('initial_salud_max', 50),
-                salud_max=data.get('initial_salud_max', 50),
-                loot_table_id=data.get('initial_loot_table_id')
-            )
-            db.session.add_all([new_inventario, new_danio])
-            db.session.flush()
+    if not all([id_tipo_npc, id_mundo, posicion]):
+        return jsonify({"message": "id_tipo_npc, id_mundo y posicion son requeridos."}), 400
 
-            criatura_viva_base = CriaturaViva_Base(
-                hambre_actual=data.get('initial_hambre_max', 50),
-                hambre_max=data.get('initial_hambre_max', 50),
-                dano_ataque_base=data.get('initial_dano_ataque_base', 5),
-                velocidad_movimiento=data.get('initial_velocidad_movimiento', 3.0),
-                id_danio=new_danio.id,
-                id_inventario=new_inventario.id
-            )
-            db.session.add(criatura_viva_base)
-            db.session.flush()
-        
-        data['id_criatura_viva_base'] = criatura_viva_base.id
-        
-        # Limpiar campos initial_X antes de pasar a InstanciaNPC si se crearon
-        for key in list(data.keys()):
-            if key.startswith('initial_'):
-                del data[key]
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"message": "Error de validación de datos o componentes base", "errors": str(e)}), 400
+    # 1. Buscar la plantilla (el "molde")
+    tipo_npc_template = db.session.get(TipoNPC, id_tipo_npc)
+    if not tipo_npc_template:
+        return jsonify({"message": f"TipoNPC con ID {id_tipo_npc} no encontrado."}), 404
 
     try:
-        new_inst_npc = InstanciaNPC(**data)
-        db.session.add(new_inst_npc)
+        # 2. Crear los componentes basándose en la plantilla
+        new_inventario = Inventario(
+            capacidad_slots=tipo_npc_template.initial_inventario_capacidad_slots,
+            capacidad_peso_kg=tipo_npc_template.initial_inventario_capacidad_peso_kg
+        )
+        new_danio = Daño(
+            salud_actual=tipo_npc_template.initial_salud_max,
+            salud_max=tipo_npc_template.initial_salud_max,
+            loot_table_id=tipo_npc_template.initial_loot_table_id
+        )
+        db.session.add_all([new_inventario, new_danio])
+        db.session.flush()
+
+        new_criatura_viva = CriaturaViva_Base(
+            hambre_actual=tipo_npc_template.initial_hambre_max,
+            hambre_max=tipo_npc_template.initial_hambre_max,
+            dano_ataque_base=tipo_npc_template.initial_dano_ataque_base,
+            velocidad_movimiento=tipo_npc_template.initial_velocidad_movimiento,
+            id_danio=new_danio.id,
+            id_inventario=new_inventario.id
+        )
+        db.session.add(new_criatura_viva)
+        db.session.flush()
+
+        # 3. Crear la instancia final, vinculando todo
+        new_instancia = InstanciaNPC(
+            id_tipo_npc=id_tipo_npc,
+            id_mundo=id_mundo,
+            posicion=posicion,
+            id_criatura_viva_base=new_criatura_viva.id
+        )
+        db.session.add(new_instancia)
         db.session.commit()
-        return jsonify(instancia_npc_schema.dump(new_inst_npc)), 201
+        
+        return jsonify(instancia_npc_schema.dump(new_instancia)), 201
+
     except Exception as e:
         db.session.rollback()
-        return jsonify({"message": "Error interno del servidor al crear InstanciaNPC", "error": str(e)}), 500
+        return jsonify({"message": "Error interno del servidor al crear la instancia", "error": str(e)}), 500
+
 
 @admin_bp.route('/instancias_npc', methods=['GET'])
 def get_instancias_npc():
@@ -242,8 +239,9 @@ def get_instancia_npc(inst_id):
 
 @admin_bp.route('/instancias_npc_by_mundo/<int:mundo_id>', methods=['GET'])
 def get_instancias_npc_by_mundo(mundo_id):
-    # Corrección: cargar relaciones para que los datos anidados estén disponibles si el schema los pide
-    inst_npcs = InstanciaNPC.query.filter_by(id_mundo=mundo_id).all()
+    inst_npcs = InstanciaNPC.query.options(
+        joinedload(InstanciaNPC.tipo_npc)
+    ).filter_by(id_mundo=mundo_id).all()
     return jsonify(instancias_npc_schema.dump(inst_npcs)), 200
 
 @admin_bp.route('/instancias_npc/<int:inst_id>', methods=['PUT'])
@@ -441,6 +439,19 @@ def get_all_usuarios():
 def get_all_clanes():
     clanes = Clan.query.all()
     return jsonify(clanes_schema.dump(clanes)), 200
+
+@admin_bp.route('/tipos_npc', methods=['POST'])
+def create_tipo_npc():
+    try:
+        data = tipo_npc_schema.load(request.json)
+        new_tipo_npc = TipoNPC(**data)
+        db.session.add(new_tipo_npc)
+        db.session.commit()
+        return jsonify(tipo_npc_schema.dump(new_tipo_npc)), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "Error al crear TipoNPC", "error": str(e)}), 500
+
 
 @admin_bp.route('/tipos_npc', methods=['GET'])
 def get_all_tipos_npc():

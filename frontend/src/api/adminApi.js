@@ -1,220 +1,98 @@
 // el-ultimo-bastion/frontend/src/api/adminApi.js
-import axios from 'axios';
+import axios from 'axios'; // Asumiendo que instalaste axios: npm install axios
 
-const API_BASE_URL = 'http://localhost:5000/api/v1/admin';
+// Configura tu instancia de axios base. Asegúrate de que apunte a tu backend Flask.
+// Si tu backend Flask corre en http://127.0.0.1:5000 y el blueprint es '/api/v1/admin'
+const axiosInstance = axios.create({
+    baseURL: 'http://127.0.0.1:5000/api/v1/admin', 
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
 
-// --- Funciones API para TipoObjeto ---
-export const createTipoObjeto = async (objectData) => {
-    try {
-        const response = await axios.post(`${API_BASE_URL}/tipos_objeto`, objectData);
-        return response.data;
-    } catch (error) {
-        console.error('Error creating TipoObjeto:', error.response ? error.response.data : error.message);
-        throw error;
-    }
+// --- Funciones para TipoObjeto ---
+export const createTipoObjeto = async (data) => {
+    const response = await axiosInstance.post('/tipos_objeto', data);
+    return response.data;
 };
-
 export const getTiposObjeto = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/tipos_objeto`);
-        return response.data;
-    }
-    catch (error) {
-        console.error('Error fetching TipoObjetos:', error.response ? error.response.data : error.message);
-        throw error;
-    }
+    const response = await axiosInstance.get('/tipos_objeto');
+    return response.data;
 };
 
-export const getTipoObjeto = async (objId) => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/tipos_objeto/${objId}`);
-        return response.data;
-    }
-    catch (error) {
-        console.error('Error fetching TipoObjeto:', error.response ? error.response.data : error.message);
-        throw error;
-    }
+// --- Funciones para Mundo ---
+export const createMundo = async (data) => {
+    const response = await axiosInstance.post('/mundos', data);
+    return response.data;
 };
-
-
-// --- Funciones API para Mundo ---
-
-export const createMundo = async (mundoData) => {
-    try {
-        const response = await axios.post(`${API_BASE_URL}/mundos`, mundoData);
-        return response.data;
-    } catch (error) {
-        console.error('Error creating Mundo:', error.response ? error.response.data : error.message);
-        throw error;
-    }
-};
-
 export const getMundos = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/mundos`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching Mundos:', error.response ? error.response.data : error.message);
-        throw error;
-    }
+    const response = await axiosInstance.get('/mundos');
+    return response.data;
+};
+export const getMundo = async (id) => {
+    const response = await axiosInstance.get(`/mundos/${id}`);
+    return response.data;
+};
+export const updateMundo = async (id, data) => {
+    const response = await axiosInstance.put(`/mundos/${id}`, data);
+    return response.data;
 };
 
-export const getMundo = async (mundoId) => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/mundos/${mundoId}`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching Mundo:', error.response ? error.response.data : error.message);
-        throw error;
-    }
+// --- Funciones para TipoNPC ---
+export const createTipoNPC = async (data) => {
+    const response = await axiosInstance.post('/tipos_npc', data);
+    return response.data;
 };
-
-export const updateMundo = async (mundoId, mundoData) => {
-    try {
-        const response = await axios.put(`${API_BASE_URL}/mundos/${mundoId}`, mundoData);
-        return response.data;
-    } catch (error) {
-        console.error('Error updating Mundo:', error.response ? error.response.data : error.message);
-        throw error;
-    }
-};
-
-
-// --- Funciones API para InstanciaNPC ---
-
-export const createInstanciaNPC = async (npcData) => {
-    try {
-        const response = await axios.post(`${API_BASE_URL}/instancias_npc`, npcData);
-        return response.data;
-    } catch (error) {
-        console.error('Error creating InstanciaNPC:', error.response ? error.response.data : error.message);
-        throw error;
-    }
-};
-
-export const getInstanciasNPC = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/instancias_npc`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching InstanciaNPCs:', error.response ? error.response.data : error.message);
-        throw error;
-    }
-};
-
-export const getInstanciasNPCByMundo = async (mundoId) => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/instancias_npc_by_mundo/${mundoId}`);
-        return response.data;
-    } catch (error) {
-        console.error(`Error fetching InstanciaNPCs for Mundo ${mundoId}:`, error.response ? error.response.data : error.message);
-        throw error;
-    }
-};
-
-export const updateInstanciaNPC = async (instId, npcData) => {
-    try {
-        const response = await axios.put(`${API_BASE_URL}/instancias_npc/${instId}`, npcData);
-        return response.data;
-    } catch (error) {
-        console.error('Error updating InstanciaNPC:', error.response ? error.response.data : error.message);
-        throw error;
-    }
-};
-
-
-// --- Funciones para dependencias de Dropdowns (ahora apuntan a endpoints reales del backend) ---
-
-export const getUsuarios = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/usuarios`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching Usuarios for dropdown:', error.response ? error.response.data : error.message);
-        throw error;
-    }
-};
-
-export const getClanes = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/clanes`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching Clanes for dropdown:', error.response ? error.response.data : error.message);
-        throw error;
-    }
-};
-
 export const getTiposNPC = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/tipos_npc`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching TipoNPCs for dropdown:', error.response ? error.response.data : error.message);
-        throw error;
-    }
+    const response = await axiosInstance.get('/tipos_npc');
+    return response.data;
 };
 
-export const getCriaturaVivaBases = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/criaturaviva_bases`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching CriaturaVivaBases for dropdown:', error.response ? error.response.data : error.message);
-        throw error;
-    }
+// --- Funciones para InstanciaNPC ---
+export const createInstanciaNPC = async (data) => {
+    const response = await axiosInstance.post('/instancias_npc', data);
+    return response.data;
+};
+export const getInstanciasNPCByMundo = async (mundoId) => {
+    const response = await axiosInstance.get(`/instancias_npc_by_mundo/${mundoId}`);
+    return response.data;
+};
+export const getInstanciasNPC = async () => { // Si decides mantener una vista global de instancias
+    const response = await axiosInstance.get('/instancias_npc');
+    return response.data;
 };
 
-// --- Funciones API para Bastion ---
-export const createBastion = async (bastionData) => {
-    try {
-        const response = await axios.post(`${API_BASE_URL}/bastiones`, bastionData);
-        return response.data;
-    } catch (error) {
-        console.error('Error creating Bastion:', error.response ? error.response.data : error.message);
-        throw error;
-    }
+
+// --- Funciones para Usuario y Clan (para dropdowns) ---
+export const getUsuarios = async () => {
+    const response = await axiosInstance.get('/usuarios');
+    return response.data;
+};
+export const getClanes = async () => {
+    const response = await axiosInstance.get('/clanes');
+    return response.data;
 };
 
+// --- Funciones para Bastion ---
+export const createBastion = async (data) => {
+    const response = await axiosInstance.post('/bastiones', data);
+    return response.data;
+};
 export const getBastions = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/bastiones`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching Bastions:', error.response ? error.response.data : error.message);
-        throw error;
-    }
+    const response = await axiosInstance.get('/bastiones');
+    return response.data;
+};
+export const updateBastion = async (id, data) => {
+    const response = await axiosInstance.put(`/bastiones/${id}`, data);
+    return response.data;
+};
+export const getBastionByUserId = async (userId) => {
+    const response = await axiosInstance.get(`/bastiones_by_user/${userId}`);
+    return response.data;
 };
 
-export const getBastion = async (bastionId) => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/bastiones/${bastionId}`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching Bastion:', error.response ? error.response.data : error.message);
-        throw error;
-    }
-};
-
-export const updateBastion = async (bastionId, bastionData) => {
-    try {
-        const response = await axios.put(`${API_BASE_URL}/bastiones/${bastionId}`, bastionData);
-        return response.data;
-    } catch (error) {
-        console.error('Error updating Bastion:', error.response ? error.response.data : error.message);
-        throw error;
-    }
-};
-
-// --- Funciones para Sincronización de Game State (desde Godot) ---
-// Aunque se llama desde el frontend para simulación en este plan,
-// su uso principal será desde Data_Loader.gd
-export const syncBastionGameState = async (bastionId, gameStateData) => {
-    try {
-        const response = await axios.put(`${API_BASE_URL}/bastiones/${bastionId}/sync_game_state`, gameStateData);
-        return response.data;
-    } catch (error) {
-        console.error('Error syncing Bastion game state:', error.response ? error.response.data : error.message);
-        throw error;
-    }
+// --- Funciones para CriaturaViva_Base (para dropdowns de Bastion si aplica) ---
+export const getCriaturaVivaBases = async () => {
+    const response = await axiosInstance.get('/criaturaviva_bases');
+    return response.data;
 };
