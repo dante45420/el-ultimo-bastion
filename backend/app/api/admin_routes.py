@@ -15,6 +15,7 @@ from app.schemas import (
 from flask_cors import CORS
 from sqlalchemy.orm.attributes import flag_modified # Necesario para actualizar JSONB
 from sqlalchemy.orm import joinedload 
+from marshmallow import ValidationError # Necesario para manejar errores de validación
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -443,14 +444,39 @@ def get_all_clanes():
 @admin_bp.route('/tipos_npc', methods=['POST'])
 def create_tipo_npc():
     try:
+        print("=== DEBUG: Datos recibidos para crear TipoNPC ===")
+        print(f"Request JSON: {request.json}")
+        
+        # Validar datos con el schema
         data = tipo_npc_schema.load(request.json)
+        print(f"Datos validados: {data}")
+        
+        # Crear el TipoNPC
         new_tipo_npc = TipoNPC(**data)
         db.session.add(new_tipo_npc)
         db.session.commit()
+        
+        print(f"TipoNPC creado exitosamente con ID: {new_tipo_npc.id}")
         return jsonify(tipo_npc_schema.dump(new_tipo_npc)), 201
-    except Exception as e:
+        
+    except ValidationError as e:
+        print(f"Error de validación: {e}")
         db.session.rollback()
-        return jsonify({"message": "Error al crear TipoNPC", "error": str(e)}), 500
+        return jsonify({
+            "message": "Error de validación de datos", 
+            "errors": e.messages,
+            "received_data": request.json
+        }), 400
+        
+    except Exception as e:
+        print(f"Error interno: {str(e)}")
+        print(f"Tipo de error: {type(e)}")
+        db.session.rollback()
+        return jsonify({
+            "message": "Error al crear TipoNPC", 
+            "error": str(e),
+            "error_type": str(type(e))
+        }), 500
 
 
 @admin_bp.route('/tipos_npc', methods=['GET'])

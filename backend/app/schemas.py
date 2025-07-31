@@ -75,7 +75,8 @@ class TipoNPCSchema(Schema):
     descripcion = fields.Str(allow_none=True)
     id_grafico = fields.Str(allow_none=True)
     rol_npc = fields.Str(required=True, validate=validate.OneOf([
-        "CONSTRUCTOR", "MALVADO", "COMERCIANTE", "MAGO", "GENERICO"
+        "GENERICO", "COMERCIANTE", "GUARDIA", "MALVADO", "CONSTRUCTOR", 
+        "MAGO", "MASCOTA"
     ]))
     comportamiento_ia = fields.Str(allow_none=True)
     habilidades_base = fields.List(fields.Int(), load_default=[])

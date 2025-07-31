@@ -1,5 +1,5 @@
 # el-ultimo-bastion/game_engine/scripts/World.gd
-# VERSIÓN REVISADA CON CORRECCIÓN DE is_valid() PARA PackedScene
+# VERSIÓN CORREGIDA CON selected_world_id DECLARADA
 extends Node3D
 class_name World
 
@@ -7,6 +7,9 @@ var data_loader: DataLoader
 var world_name_label: Label3D
 var ground_container: Node3D
 var npc_container: Node3D 
+
+# --- VARIABLE QUE FALTABA ---
+var selected_world_id = null
 
 var current_world_data: Dictionary = {}
 var block_mesh: Mesh = preload("res://assets/default_block_mesh.tres")
@@ -17,43 +20,102 @@ const NPC_SCENE = preload("res://scenes/NPC.tscn")
 
 func _ready():
 	print("[DEBUG] World: _ready() INICIADO.")
-	data_loader = get_node("DataLoader")
-	world_name_label = get_node("WorldNameLabel")
-	ground_container = get_node("GroundContainer")
-	
-	npc_container = get_node_or_null("NPCContainer")
+	npc_container = get_node("NPCContainer")
 	if not npc_container:
-		print("-----> ¡ERROR CRÍTICO! World: Nodo 'NPCContainer' no encontrado como hijo de World_Node. Creándolo.")
-		npc_container = Node3D.new()
-		npc_container.name = "NPCContainer"
-		add_child(npc_container)
-	else:
-		print("[DEBUG] World: Nodo 'NPCContainer' encontrado.")
+		print("-----> ¡ERROR CRÍTICO! World: No se encontró el nodo 'NPCContainer'. Verifique la estructura de la escena.")
+		return
+	print("[DEBUG] World: Nodo 'NPCContainer' encontrado.")
 
-	var emergency_floor = StaticBody3D.new()
-	emergency_floor.collision_layer = 1
-	var floor_shape = CollisionShape3D.new()
-	var floor_mesh = MeshInstance3D.new()
-	var plane_mesh = BoxMesh.new()
-	plane_mesh.size = Vector3(500, 1, 500)
-	floor_mesh.mesh = plane_mesh
-	floor_shape.shape = plane_mesh.create_convex_shape()
-	emergency_floor.add_child(floor_mesh)
-	emergency_floor.add_child(floor_shape)
-	emergency_floor.position.y = -10
-	add_child(emergency_floor)
+	data_loader = get_node("/root/MainScene/World_Node/DataLoader")
+	if not data_loader:
+		print("-----> ¡ERROR CRÍTICO! World: DataLoader no encontrado en el autoload.")
+		return
+
+	# Crear suelo de emergencia
+	_create_emergency_floor()
+	
+	# Cargar mundos disponibles
+	_load_world_list()
+
+func _create_emergency_floor():
+	var static_body = StaticBody3D.new()
+	var collision_shape = CollisionShape3D.new()
+	var box_shape = BoxShape3D.new()
+	box_shape.size = Vector3(200, 1, 200)
+	collision_shape.shape = box_shape
+	static_body.add_child(collision_shape)
+	static_body.position = Vector3(0, -5, 0)
+	static_body.collision_layer = 1
+	add_child(static_body)
 	print("[DEBUG] World: Suelo de emergencia creado en la capa de colisión 1.")
 
+func _load_world_list():
+	print("[DEBUG] World: _load_world_list() iniciado")
+	
+	data_loader = get_node_or_null("/root/MainScene/World_Node/DataLoader")
+	
 	if data_loader:
+		print("[DEBUG] World: ✅ DataLoader encontrado, solicitando mundos...")
+		# USAR EL MÉTODO CORRECTO QUE SÍ EXISTE
 		data_loader.get_mundos_list(
 			Callable(self, "_on_world_list_loaded"),
 			Callable(self, "_on_world_list_failed")
 		)
-		print("[DEBUG] World: Solicitando lista de mundos con callbacks.")
+		print("[DEBUG] World: Solicitud de mundos enviada exitosamente.")
 	else:
-		print("-----> ¡ERROR! World: No se encontró el DataLoader. Generando mundo por defecto.")
-		_generate_default_world()
+		print("-----> ¡ERROR CRÍTICO! World: DataLoader no encontrado.")
 
+func _on_world_list_loaded(data, status_code):
+	print(str("[DEBUG] World: _on_world_list_loaded() llamado. Estado: ", status_code, ", Datos recibidos (truncated): ", str(data).left(150), "..."))
+	if status_code == 200 and data is Array and data.size() > 0:
+		# BUSCAR ESPECÍFICAMENTE EL MUNDO CON ID 1 (SANDBOX)
+		var sandbox_world = null
+		for world in data:
+			if world.get("id", 0) == 1:  # Buscar mundo con ID 1
+				sandbox_world = world
+				break
+		
+		if sandbox_world:
+			selected_world_id = sandbox_world.get("id")
+			print(str("[DEBUG] World: Cargando mundo ID: ", selected_world_id, ", Nombre: ", sandbox_world.get("nombre_mundo", "Sin nombre")))
+			_generate_world_from_data(sandbox_world)
+		else:
+			print("-----> ¡ADVERTENCIA! World: No se encontró mundo con ID 1.")
+	else:
+		print(str("-----> ¡ERROR! World: Error al cargar mundos. Estado: ", status_code, ", Datos: ", str(data).left(150), "..."))
+
+func _on_world_list_failed(_status_code, _error_data):
+	print(str("-----> ¡ERROR! World: Solicitud de mundos falló. Estado: ", _status_code, ", Error: ", _error_data))
+
+func _generate_world_from_data(world_data):
+	print("[DEBUG] World: _generate_world_from_data() INICIADO.")
+	
+	# Limpiar NPCs existentes
+	if npc_container:
+		for child in npc_container.get_children():
+			child.queue_free()
+		print("[DEBUG] World: Limpiado npc_container de NPCs existentes.")
+	
+	# Generar terreno básico
+	var seed_str = world_data.get("semilla_generacion", "SANDBOX_SEED_1")
+	var size = world_data.get("estado_actual_terreno", {}).get("size", 50)
+	print(str("[DEBUG] World: Generando terreno con semilla '", seed_str, "' y tamaño ", size))
+	_generate_terrain(seed_str, {"terrain_size": size})
+	print("[DEBUG] World: Generación de terreno completada.")
+	
+	# Solicitar NPCs para este mundo
+	if selected_world_id != null:
+		print(str("[DEBUG] World: Solicitando NPCs para mundo ID: ", selected_world_id))
+		# USAR EL MÉTODO CORRECTO QUE SÍ EXISTE
+		data_loader.get_instancias_npc_by_mundo(
+			selected_world_id,
+			Callable(self, "_on_instancias_npc_loaded"),
+			Callable(self, "_on_instancias_npc_failed")
+		)
+		print("[DEBUG] World: Solicitud de NPCs enviada exitosamente.")
+	else:
+		print("-----> ¡ADVERTENCIA! World: No hay ID de mundo válido para solicitar NPCs.")
+	print("[DEBUG] World: _generate_world_from_data() COMPLETADO.")
 
 func _generate_terrain(p_seed: String, config: Dictionary):
 	if not ground_container: return
@@ -97,56 +159,9 @@ func _generate_terrain(p_seed: String, config: Dictionary):
 
 	print("[DEBUG] World: Generación de terreno completada.")
 	
-func _on_world_list_loaded(data, status_code):
-	print(str("[DEBUG] World: _on_world_list_loaded() llamado. Estado: ", status_code, ", Datos recibidos (truncated): ", str(data).left(150), "..."))
-	if status_code == 200 and data is Array and data.size() > 0:
-		var sandbox_mundo = data.filter(func(mundo): return mundo.get("nombre_mundo") == "Mundo Sandbox para Devs")
-		current_world_data = sandbox_mundo[0] if not sandbox_mundo.is_empty() else data[0]
-		_generate_world_from_data()
-	else:
-		print("-----> ¡ERROR! World: Falló la carga inicial de mundos o no se encontraron. Generando mundo por defecto.")
-		_generate_default_world()
-
-func _on_world_list_failed(_status_code, _error_data):
-	print(str("-----> ¡ERROR! World: Solicitud inicial de mundos falló. Estado: ", _status_code, ", Error: ", _error_data))
-	_generate_default_world()
-
-func _generate_default_world():
-	print("[DEBUG] World: Generando mundo por defecto.")
-	current_world_data = {
-		"id": -1, "nombre_mundo": "Mundo por Defecto", "semilla_generacion": "DEFAULT_SEED",
-		"configuracion_actual": {"terrain_size": 30, "terrain_height_scale": 5.0}
-	}
-	_generate_world_from_data()
-
-func _generate_world_from_data():
-	print("[DEBUG] World: _generate_world_from_data() INICIADO.")
-	for child in ground_container.get_children(): child.queue_free()
-	
-	if npc_container and is_instance_valid(npc_container):
-		for child in npc_container.get_children(): child.queue_free()
-		print("[DEBUG] World: Limpiado npc_container de NPCs existentes.")
-	else:
-		print("-----> ¡ADVERTENCIA! World: npc_container es inválido o nulo al intentar limpiarlo.")
-
-	var p_seed = current_world_data.get("semilla_generacion", "DEFAULT_SEED")
-	var world_config = current_world_data.get("configuracion_actual", {})
-	world_name_label.text = "Mundo: " + current_world_data.get("nombre_mundo", "Mundo Desconocido")
-	_generate_terrain(p_seed, world_config)
-	var world_id = current_world_data.get("id", -1)
-	if world_id != -1:
-		data_loader.get_instancias_npc_by_mundo(
-			world_id,
-			Callable(self, "_on_instancias_npc_loaded"),
-			Callable(self, "_on_instancias_npc_failed")
-		)
-		print(str("[DEBUG] World: Solicitando instancias de NPC para mundo ID: ", world_id, " con callbacks."))
-	else:
-		print("-----> ¡ADVERTENCIA! World: No hay ID de mundo válido para solicitar NPCs.")
-	print("[DEBUG] World: _generate_world_from_data() COMPLETADO.")
-
 func _on_instancias_npc_loaded(data, status_code):
-	print(str("[DEBUG] World: _on_instancias_npc_loaded() llamado. Estado: ", status_code, ", Datos recibidos (truncated): ", str(data).left(150), "..."))
+	print(str("[DEBUG] World: _on_instancias_npc_loaded() llamado. Estado: ", status_code))
+	print(str("[DEBUG] World: DATOS COMPLETOS: ", JSON.stringify(data)))
 	if status_code == 200 and data is Array: # Asegurarse de que 'data' sea un array
 		_generate_npcs(data)
 	else:
@@ -176,6 +191,14 @@ func _generate_npcs(npcs_data: Array):
 		var npc_id_from_data = npc_instance_data.get("id", "N/A")
 		var tipo_npc_name_from_data = npc_instance_data.get("tipo_npc", {}).get("nombre", "Desconocido")
 		print(str("[DEBUG] World: Procesando NPC instancia ID: ", npc_id_from_data, ", Tipo: ", tipo_npc_name_from_data, " en World.gd"))
+		
+		# DEBUGGING SEGURO - ESTRUCTURA COMPLETA DEL NPC
+		print(str("[DEBUG] World: Datos completos NPC ID ", npc_id_from_data, ": ", JSON.stringify(npc_instance_data)))
+		
+		# DEBUGGING SEGURO - VERIFICAR TIPO_NPC ESPECÍFICO
+		var tipo_npc_data = npc_instance_data.get("tipo_npc", {})
+		print(str("[DEBUG] World: Tipo NPC completo: ", JSON.stringify(tipo_npc_data)))
+		print(str("[DEBUG] World: Nombre extraído: '", tipo_npc_name_from_data, "'"))
 
 		var npc_node = NPC_SCENE.instantiate()
 		
@@ -194,6 +217,7 @@ func _generate_npcs(npcs_data: Array):
 		print(str("[DEBUG] World: NPC_NODE ID ", npc_id_from_data, " AÑADIDO como hijo de npc_container (Path: ", npc_container.get_path(), ")."))
 
 		if npc_node.has_method("initialize_npc"):
+			print(str("[DEBUG] World: Llamando initialize_npc con datos: ", JSON.stringify(npc_instance_data)))
 			npc_node.initialize_npc(npc_instance_data)
 			print(str("[DEBUG] World: Llamado initialize_npc() para NPC ID: ", npc_id_from_data, " en World.gd."))
 		else:

@@ -1,19 +1,25 @@
-[gd_scene load_steps=7 format=3 uid="uid://cgrx7n07uvw6u"]
+[gd_scene load_steps=11 format=3 uid="uid://cgrx7n07uvw6u"]
 
 [ext_resource type="Script" uid="uid://iw7tqwnb64q" path="res://scripts/NPC.gd" id="1_mhefn"]
-[ext_resource type="PackedScene" uid="uid://kfp0bwl5ufdn" path="res://components/HealthComponent.tscn" id="2_6xvi5"]
-[ext_resource type="PackedScene" uid="uid://bie1gnb8r8b2e" path="res://components/InventoryComponent.tscn" id="2_jnjht"]
-[ext_resource type="PackedScene" uid="uid://iwxu40angn0w" path="res://components/HungerComponent.tscn" id="3_ktgr7"]
+[ext_resource type="PackedScene" uid="uid://prnfb50ipqfc" path="res://scenes/components/HealthComponent.tscn" id="2_6xvi5"]
+[ext_resource type="PackedScene" uid="uid://bxqanon1bradb" path="res://scenes/components/InventoryComponent.tscn" id="2_jnjht"]
+[ext_resource type="PackedScene" uid="uid://b3cc5qv0qy8lc" path="res://scenes/components/HungerComponent.tscn" id="3_ktgr7"]
+[ext_resource type="PackedScene" uid="uid://yr88dvwg6ycq" path="res://scenes/components/MovementComponent.tscn" id="5_7pv12"]
+[ext_resource type="PackedScene" uid="uid://b1jfk6f7f0ai4" path="res://scenes/components/AIComponent.tscn" id="6_x6c3r"]
+[ext_resource type="PackedScene" uid="uid://bxemfak7i4gg2" path="res://scenes/components/InteractionComponent.tscn" id="7_slm4e"]
+[ext_resource type="PackedScene" uid="uid://dyyrsyumdxlww" path="res://scenes/components/VisualsComponent.tscn" id="8_h6w2b"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_6xvi5"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ktgr7"]
 height = 1.8
 
-[node name="NPC" type="CharacterBody3D"]
+[node name="NPC" type="CharacterBody3D" groups=["damageable"]]
 script = ExtResource("1_mhefn")
 
-[node name="InventoryComponent" parent="." instance=ExtResource("2_jnjht")]
+[node name="HungerComponent" parent="." instance=ExtResource("3_ktgr7")]
+
+[node name="InteractionComponent" parent="." instance=ExtResource("7_slm4e")]
 
 [node name="VisualModel" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_6xvi5")
@@ -27,6 +33,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 pixel_size = 0.05
 text = "\"NPC Name\""
 
+[node name="MovementComponent" parent="." instance=ExtResource("5_7pv12")]
+
+[node name="AIComponent" parent="." instance=ExtResource("6_x6c3r")]
+
 [node name="HealthComponent" parent="." instance=ExtResource("2_6xvi5")]
 
-[node name="HungerComponent" parent="." instance=ExtResource("3_ktgr7")]
+[node name="InventoryComponent" parent="." instance=ExtResource("2_jnjht")]
+
+[node name="VisualsComponent" parent="." instance=ExtResource("8_h6w2b")]

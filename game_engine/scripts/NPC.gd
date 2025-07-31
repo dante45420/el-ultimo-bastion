@@ -1,228 +1,95 @@
-# el-ultimo-bastion/game_engine/scripts/NPC.gd
-# VERSIÓN CON HealthComponent y HungerComponent integrados, e InventoryComponent referenciado
+# res://scripts/NPC.gd
+# VERSIÓN FINAL CON INICIALIZACIÓN COMPLETA DE TODOS LOS COMPONENTES
 extends CharacterBody3D
 class_name NPC
 
-@onready var name_label: Label3D = $NameLabel 
-@onready var health_component: HealthComponent = $HealthComponent 
-@onready var hunger_component: HungerComponent = $HungerComponent
-@onready var inventory_component: InventoryComponent = $InventoryComponent 
-
-# --- CONSTANTES DE MOVIMIENTO ---
-const GRAVITY = 9.8 
-const DEFAULT_WANDER_SPEED = 0.5       
-const WANDER_RANGE = 5.0       
-const WANDER_IDLE_TIME_MIN = 3.0
-const WANDER_IDLE_TIME_MAX = 8.0
-
-# --- VARIABLES DE ESTADO ---
-var initial_position: Vector3
-var wander_target_position: Vector3
-var wander_timer: float = 0.0
-var can_wander: bool = false
-var current_wander_speed: float = DEFAULT_WANDER_SPEED
+# --- Referencias a Nodos y Componentes ---
+# La anotación @onready asegura que Godot asigne estas variables
+# justo antes de que se llame a la función _ready().
+@onready var name_label: Label3D = $NameLabel
+@onready var health_component: HealthComponent = $HealthComponent
+@onready var movement_component: MovementComponent = $MovementComponent
+@onready var ai_component: AIComponent = $AIComponent
+@onready var interaction_component: InteractionComponent = $InteractionComponent
+@onready var visuals_component: VisualsComponent = $VisualsComponent
+@onready var combat_component: CombatComponent = $CombatComponent
+# Añade aquí @onready var para los otros componentes cuando los agregues a la escena
 
 var npc_id: int
-var tipo_npc_id: int
-var tipo_npc_data_full: Dictionary
 
-func _ready():
-	if not name_label:
-		name_label = find_child("NameLabel") 
-		if not name_label:
-			print(str("-----> ¡ADVERTENCIA! NPC ID ", npc_id, ": NameLabel no encontrado por nombre en _ready(). Asegúrate de que el nodo Label3D se llama 'NameLabel'."))
-	
-	if health_component and is_instance_valid(health_component):
-		health_component.died.connect(Callable(self, "_on_npc_died"))
-	else:
-		print(str("-----> ¡ERROR! NPC ID ", npc_id, ": HealthComponent no encontrado o no válido en _ready()."))
-		
-	if hunger_component and is_instance_valid(hunger_component):
-		hunger_component.starved.connect(Callable(self, "_on_npc_starved"))
-	else:
-		print(str("-----> ¡ERROR! NPC ID ", npc_id, ": HungerComponent no encontrado o no válido en _ready()."))
-	
-	if inventory_component and is_instance_valid(inventory_component): 
-		pass 
-	else:
-		print(str("-----> ¡ERROR! NPC ID ", npc_id, ": InventoryComponent no encontrado o no válido en _ready().")) 
-
-
+## La única función pública del script. Es llamada por World.gd al crear el NPC.
+## Su trabajo es distribuir los datos del backend a cada componente para que se inicialice.
 func initialize_npc(instance_data: Dictionary):
-	print(str("[DEBUG] NPC ID ", instance_data.get("id", 0), ": initialize_npc() INICIADO."))
-	
+	var tipo_npc_data = instance_data.get("tipo_npc", {})
+	var valores_rol = tipo_npc_data.get("valores_rol", {})
 	npc_id = instance_data.get("id", 0)
-	tipo_npc_id = instance_data.get("id_tipo_npc", 0)
-	tipo_npc_data_full = instance_data.get("tipo_npc", {})
 
+	# --- Posición y Física ---
 	var pos_dict = instance_data.get("posicion", {"x": 0.0, "y": 5.0, "z": 0.0})
-	initial_position = Vector3(
-		float(pos_dict.get("x", 0.0)),
-		max(float(pos_dict.get("y", 0.0)), 0.0), 
-		float(pos_dict.get("z", 0.0))
-	)
-	self.global_position = initial_position
-	print(str("[DEBUG] NPC ID ", npc_id, ": Posición GLOBAL establecida en: ", self.global_position))
-	
-	self.collision_layer = 4
-	self.collision_mask = 1 | 2 | 4 
-	print(str("[DEBUG] NPC ID ", npc_id, ": Capa de colisión: ", self.collision_layer, ", Máscara: ", self.collision_mask))
-	
-	if name_label and is_instance_valid(name_label):
-		name_label.text = str(tipo_npc_data_full.get("nombre", "NPC Desconocido"), " (ID: ", npc_id, ")")
-		var visual_height_for_label = tipo_npc_data_full.get("valores_rol", {}).get("hitbox_dimensions", {}).get("height", 1.0)
-		name_label.global_position = self.global_position + Vector3(0, visual_height_for_label + 0.5, 0)
-		print(str("[DEBUG] NPC ID ", npc_id, ": NameLabel actualizado y posicionado a: ", name_label.text, " en ", name_label.global_position))
-	else:
-		print(str("-----> ¡ADVERTENCIA! NPC ID ", npc_id, ": NameLabel NO se pudo actualizar/posicionar. Asegúrate de que el nodo Label3D se llama 'NameLabel' y está en la escena."))
-	
-	var valores_rol = tipo_npc_data_full.get("valores_rol", {})
-	can_wander = valores_rol.get("puede_deambular", false)
-	current_wander_speed = tipo_npc_data_full.get("initial_velocidad_movimiento", DEFAULT_WANDER_SPEED)
-	print(str("[DEBUG] NPC ID ", npc_id, ": Velocidad deambular: ", current_wander_speed))
+	self.global_position = Vector3(pos_dict.x, pos_dict.y, pos_dict.z)
+	self.collision_layer = 4  # Capa "npcs"
+	self.collision_mask = 1 | 2 | 4 # Colisiona con "mundo", "jugador" y otros "npcs"
 
-	var visual_radius = valores_rol.get("hitbox_dimensions", {}).get("radius", 0.5)
-	var visual_height = valores_rol.get("hitbox_dimensions", {}).get("height", 1.0)
-	var visual_color_hex = valores_rol.get("color", "#00FF00")
+	# --- Inicialización de Componentes (con comprobaciones de seguridad) ---
 	
-	print(str("[DEBUG] NPC ID ", npc_id, ": Datos visuales obtenidos: Radio=", visual_radius, ", Altura=", visual_height, ", Color=", visual_color_hex))
+	if is_instance_valid(visuals_component):
+		print(str("[DEBUG] NPC: Llamando create_visuals con valores_rol: ", JSON.stringify(valores_rol)))
+		visuals_component.create_visuals(valores_rol)
+		print(str("[DEBUG] NPC: create_visuals completado para NPC ID: ", npc_id))
 
-	_create_visual_and_hitbox(visual_radius, visual_height, Color(visual_color_hex))
+	var cvb_data = instance_data.get("criatura_viva_base", {})
+	var danio_data = cvb_data.get("danio", {})
 	
-	if can_wander:
-		_reset_wander_timer()
-		print(str("[DEBUG] NPC ID ", npc_id, ": Puede deambular: ", can_wander, ". Temporizador iniciado."))
-	else:
-		print(str("[DEBUG] NPC ID ", npc_id, ": Puede deambular: ", can_wander, ". Permanecerá estático."))
-
-	# --- Inicializar HealthComponent ---
-	if health_component and is_instance_valid(health_component):
-		var cvb_data = instance_data.get("criatura_viva_base", {})
-		var danio_data = cvb_data.get("danio", {})
+	if is_instance_valid(health_component):
+		# OBTENER LOOT SETTINGS
+		var loot_settings = valores_rol.get("loot_settings", {})
 		
-		var npc_max_health = danio_data.get("salud_max", 100)
-		var npc_current_health = danio_data.get("salud_actual", 100)
-		var npc_loot_table_id = danio_data.get("loot_table_id", -1)
-		var npc_resistance_map = tipo_npc_data_full.get("resistencia_dano", {})
+		health_component.initialize_health(
+			npc_id, "NPC",
+			danio_data.get("salud_max", 100),
+			danio_data.get("salud_actual", 100),
+			-1,  # loot_table_id (por ahora -1)
+			tipo_npc_data.get("resistencia_dano", {}),  # resistance_map
+			loot_settings  # NUEVO: pasar loot_settings
+		)
+		health_component.died.connect(Callable(self, "_on_death"))
 
-		health_component.initialize_health(npc_id, "NPC", npc_max_health, npc_current_health, npc_loot_table_id, npc_resistance_map)
-		print(str("[DEBUG] NPC ID ", npc_id, ": HealthComponent inicializado. Salud: ", npc_current_health, "/", npc_max_health))
-	else:
-		print(str("-----> ¡ERROR! NPC ID ", npc_id, ": HealthComponent no encontrado o no válido."))
-
-	# --- Inicializar HungerComponent ---
-	if hunger_component and is_instance_valid(hunger_component):
-		var cvb_data = instance_data.get("criatura_viva_base", {})
-		
-		var npc_max_hunger = cvb_data.get("hambre_max", 100)
-		var npc_current_hunger = cvb_data.get("hambre_actual", 100)
-		
-		hunger_component.initialize_hunger(npc_id, "NPC", npc_max_hunger, npc_current_hunger)
-		print(str("[DEBUG] NPC ID ", npc_id, ": HungerComponent inicializado. Hambre: ", npc_current_hunger, "/", npc_max_hunger))
-	else:
-		print(str("-----> ¡ERROR! NPC ID ", npc_id, ": HungerComponent no encontrado o no válido."))
-
-	# --- Inicializar InventoryComponent ---
-	if inventory_component and is_instance_valid(inventory_component): 
-		var cvb_data = instance_data.get("criatura_viva_base", {})
-		var inv_data = cvb_data.get("inventario", {})
-		
-		var npc_inventory_id = inv_data.get("id", -1)
-		var npc_max_slots = inv_data.get("capacidad_slots", 10)
-		var npc_max_weight = float(inv_data.get("capacidad_peso_kg", 100.0))
-		var npc_items = inv_data.get("contenido", {}) 
-		
-		var default_item_data = {"nombre": "Item Desconocido", "peso_unidad": 1.0, "es_apilable": false}
-		var items_with_data = {}
-		for item_id_str in npc_items:
-			var item_id_int = int(item_id_str)
-			items_with_data[item_id_int] = {
-				"quantity": npc_items[item_id_str].get("quantity", 0),
-				"item_data": default_item_data
-			}
-
-		inventory_component.initialize_inventory(npc_id, "NPC", npc_inventory_id, npc_max_slots, npc_max_weight, items_with_data)
-		print(str("[DEBUG] NPC ID ", npc_id, ": InventoryComponent inicializado. Slots: ", npc_max_slots, ", Peso: ", npc_max_weight))
-	else:
-		print(str("-----> ¡ERROR! NPC ID ", npc_id, ": InventoryComponent no encontrado o no válido."))
-
-
-	print(str("[DEBUG] NPC ID ", npc_id, ": Inicialización COMPLETA."))
-
-func _create_visual_and_hitbox(radius: float, height: float, color: Color):
-	print(str("[DEBUG] NPC ID ", npc_id, ": _create_visual_and_hitbox() llamado. Param: R=", radius, ", H=", height, ", C=", color))
+	if is_instance_valid(movement_component):
+		movement_component.speed = tipo_npc_data.get("initial_velocidad_movimiento", 3.0)
 	
-	for child in get_children():
-		if (child is MeshInstance3D and child.name == "NPCVisualModel") or \
-		   (child is CollisionShape3D and child.name == "NPCHitboxCollision"):
-			print(str("[DEBUG] NPC ID ", npc_id, ": Eliminando hijo existente: ", child.name))
-			child.queue_free()
-		
-	var mesh_instance = MeshInstance3D.new()
-	mesh_instance.name = "NPCVisualModel" 
-	
-	var visual_mesh = CapsuleMesh.new()
-	visual_mesh.radius = radius
-	visual_mesh.height = height
-	mesh_instance.mesh = visual_mesh
-	
-	var npc_material = StandardMaterial3D.new()
-	npc_material.albedo_color = color
-	mesh_instance.material_override = npc_material
-	
-	mesh_instance.position.y = height / 2.0 
-	add_child(mesh_instance)
-	print(str("[DEBUG] NPC ID ", npc_id, ": Nuevo MeshInstance3D 'NPCVisualModel' creado y añadido. Posición local Y: ", mesh_instance.position.y))
-
-	var default_hitbox = CollisionShape3D.new()
-	default_hitbox.name = "NPCHitboxCollision" 
-	var default_shape = CapsuleShape3D.new()
-	default_shape.radius = radius
-	default_shape.height = height
-	default_hitbox.shape = default_shape
-	
-	default_hitbox.position.y = height / 2.0
-	add_child(default_hitbox)
-	print(str("[DEBUG] NPC ID ", npc_id, ": Nuevo CollisionShape3D 'NPCHitboxCollision' creado y añadido. Posición local Y: ", default_hitbox.position.y))
-
-	print(str("[DEBUG] NPC ID ", npc_id, ": _create_visual_and_hitbox() COMPLETO."))
-
-
-func _physics_process(delta):
-	if not is_on_floor():
-		velocity.y -= GRAVITY * delta
+	if is_instance_valid(ai_component):
+		ai_component.initialize_ai(instance_data)
 	else:
-		velocity.y = 0
+		print("¡ERROR GRAVE en NPC ID ", npc_id, "! No se encontró el nodo AIComponent. El NPC no tendrá inteligencia.")
 
-	if can_wander:
-		if global_position.distance_to(wander_target_position) < 0.5:
-			wander_timer -= delta
-			if wander_timer <= 0:
-				_set_new_wander_target()
-				_reset_wander_timer()
-		else:
-			var direction = global_position.direction_to(wander_target_position)
-			velocity.x = direction.x * current_wander_speed
-			velocity.z = direction.z * current_wander_speed
-	else:
-		velocity.x = 0
-		velocity.z = 0
+	if is_instance_valid(combat_component):
+		var combat_settings = valores_rol.get("combat_settings", {})
+		combat_component.base_damage = tipo_npc_data.get("initial_dano_ataque_base", 5.0)
+		combat_component.attack_range = combat_settings.get("range", 1.5)
+		combat_component.attack_cooldown = combat_settings.get("cooldown", 2.0)
 
-	move_and_slide()
+	if is_instance_valid(interaction_component):
+		var interaction_settings = valores_rol.get("interaction_settings", {})
+		interaction_component.initialize_interactions(interaction_settings, instance_data)
+		# (Opcional) Conectar la señal de interacción a la IA para futuras reacciones
+		# interaction_component.interacted.connect(ai_component.on_interacted)
 
-func _reset_wander_timer():
-	wander_timer = randf_range(WANDER_IDLE_TIME_MIN, WANDER_IDLE_TIME_MAX)
+	# --- UI ---
+	if is_instance_valid(name_label):
+		name_label.text = str(tipo_npc_data.get("nombre", "NPC"), " (", npc_id, ")")
+		var visual_height = valores_rol.get("hitbox_dimensions", {}).get("height", 1.8)
+		name_label.global_position = self.global_position + Vector3(0, visual_height + 0.2, 0)
 
-func _set_new_wander_target():
-	var rand_x = randf_range(-WANDER_RANGE, WANDER_RANGE)
-	var rand_z = randf_range(-WANDER_RANGE, WANDER_RANGE)
-	wander_target_position = initial_position + Vector3(rand_x, 0, rand_z)
-	print(str("[DEBUG] NPC ID ", npc_id, ": Nuevo objetivo de deambulación: ", wander_target_position))
-
-func _on_npc_died(entity_id: int, entity_type: String):
-	print(str("[DEBUG] NPC ID ", npc_id, ": Recibida señal de muerte de HealthComponent. Murió ID: ", entity_id, ", Tipo: ", entity_type))
-	pass
-
-func _on_npc_starved(entity_id: int, entity_type: String):
-	print(str("[DEBUG] NPC ID ", npc_id, ": Recibida señal de inanición de HungerComponent. NPC (", entity_type, " ID: ", entity_id, ") se ha muerto de hambre."))
-	pass
+## Se conecta a la señal 'died' del HealthComponent.
+func _on_death(_entity_id, _entity_type):
+	# Cuando morimos, le decimos a los componentes relevantes que dejen de funcionar.
+	if is_instance_valid(ai_component):
+		ai_component.set_process(false) # La IA deja de pensar.
+	
+	if is_instance_valid(interaction_component):
+		interaction_component.available_actions = [] # No se puede interactuar con un cuerpo muerto.
+	
+	if is_instance_valid(name_label):
+		name_label.visible = false # Ocultamos el nombre.
+	
+	# La lógica de desaparecer el cuerpo ya está en HealthComponent.gd, lo cual es perfecto.

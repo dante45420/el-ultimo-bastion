@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dyyrsyumdxlww"]
+
+[ext_resource type="Script" uid="uid://21v1m3e0o84a" path="res://scripts/components/VisualsComponent.gd" id="1_wju0c"]
+
+[node name="VisualsComponent" type="Node"]
+script = ExtResource("1_wju0c")

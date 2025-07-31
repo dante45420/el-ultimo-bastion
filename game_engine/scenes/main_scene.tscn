@@ -1,11 +1,14 @@
-[gd_scene load_steps=7 format=3 uid="uid://cardg18ft1ujs"]
+[gd_scene load_steps=10 format=3 uid="uid://cardg18ft1ujs"]
 
 [ext_resource type="Script" uid="uid://u0b6j7ifpabr" path="res://scripts/World.gd" id="1_pw63i"]
 [ext_resource type="Script" uid="uid://bdcreesn4vwhn" path="res://scripts/Data_Loader.gd" id="2_7ykc4"]
 [ext_resource type="Script" uid="uid://djmh37iobeqk1" path="res://scripts/Player.gd" id="3_7ykc4"]
-[ext_resource type="PackedScene" uid="uid://kfp0bwl5ufdn" path="res://components/HealthComponent.tscn" id="4_pu3yx"]
-[ext_resource type="PackedScene" uid="uid://iwxu40angn0w" path="res://components/HungerComponent.tscn" id="5_gubc5"]
-[ext_resource type="PackedScene" uid="uid://bie1gnb8r8b2e" path="res://components/InventoryComponent.tscn" id="6_rt2n2"]
+[ext_resource type="PackedScene" uid="uid://prnfb50ipqfc" path="res://scenes/components/HealthComponent.tscn" id="4_pu3yx"]
+[ext_resource type="PackedScene" uid="uid://b3cc5qv0qy8lc" path="res://scenes/components/HungerComponent.tscn" id="5_gubc5"]
+[ext_resource type="PackedScene" uid="uid://bxqanon1bradb" path="res://scenes/components/InventoryComponent.tscn" id="6_rt2n2"]
+[ext_resource type="PackedScene" uid="uid://yr88dvwg6ycq" path="res://scenes/components/MovementComponent.tscn" id="7_c16ls"]
+[ext_resource type="PackedScene" uid="uid://tbm6844av83m" path="res://scenes/components/CombatComponent.tscn" id="8_18nlu"]
+[ext_resource type="PackedScene" uid="uid://dyyrsyumdxlww" path="res://scenes/components/VisualsComponent.tscn" id="9_c1pb6"]
 
 [node name="MainScene" type="Node3D"]
 
@@ -24,19 +27,25 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
 
 [node name="NPCContainer" type="Node3D" parent="World_Node"]
 
-[node name="PlayerCharacter" type="CharacterBody3D" parent="."]
+[node name="PlayerCharacter" type="CharacterBody3D" parent="." groups=["damageable"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 5, 50)
 script = ExtResource("3_7ykc4")
 
 [node name="CameraSpringArm" type="SpringArm3D" parent="PlayerCharacter"]
-transform = Transform3D(1, 0, 0, 0, 0.939693, -0.34202, 0, 0.34202, 0.939693, 0, 1.5, 0)
+transform = Transform3D(1, 0, 0, 0, 0.939693, 0.34202, 0, -0.34202, 0.939693, 0, 1.5, 0)
 spring_length = 4.0
 
 [node name="Camera3D" type="Camera3D" parent="PlayerCharacter/CameraSpringArm"]
 current = true
 
+[node name="MovementComponent" parent="PlayerCharacter" instance=ExtResource("7_c16ls")]
+
+[node name="CombatComponent" parent="PlayerCharacter" instance=ExtResource("8_18nlu")]
+
 [node name="HealthComponent" parent="PlayerCharacter" instance=ExtResource("4_pu3yx")]
+
+[node name="InventoryComponent" parent="PlayerCharacter" instance=ExtResource("6_rt2n2")]
 
 [node name="HungerComponent" parent="PlayerCharacter" instance=ExtResource("5_gubc5")]
 
-[node name="InventoryComponent" parent="PlayerCharacter" instance=ExtResource("6_rt2n2")]
+[node name="VisualsComponent" parent="PlayerCharacter" instance=ExtResource("9_c1pb6")]
